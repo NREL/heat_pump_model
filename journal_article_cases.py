@@ -14,7 +14,7 @@ def call_heat_pump(filename, gas_price, electricity_price, carbon_price, high_T,
     hp.fixed_o_and_m_per_size = 0.02*hp.capital_cost_per_size
 
     # Assuming a 20 hour operation
-    operating_heat = 55.6
+    operating_heat = 1.85
     hp.process_heat_requirement = ([0.0,0.0] + [operating_heat]*20 + [0.0, 0.0])*8760
 
     hp.lifetime_yrs = 10
@@ -61,16 +61,19 @@ for i in [*range(1, 20)]:
 default_electricity_prices = [0.02]*8760
 default_gas_prices = [6.5]*8760
 default_carbon_price = 0
+default_waste_stream_T = 45
+default_hot_stream_T = 85
 filename = 'test_output'
 
-call_heat_pump(filename, default_gas_prices, default_electricity_prices, default_carbon_price, array_hot_stream[-1], array_cold_stream[-1])
 
-call_heat_pump('CA_flat', default_gas_prices, flat_CA_electricity_price, default_carbon_price, array_hot_stream[-1], array_cold_stream[-1])
-call_heat_pump('ID_flat', default_gas_prices, flat_ID_electricity_price, default_carbon_price, array_hot_stream[-1], array_cold_stream[-1])
-call_heat_pump('NY_flat', default_gas_prices, flat_NY_electricity_price, default_carbon_price, array_hot_stream[-1], array_cold_stream[-1])
-call_heat_pump('TX_flat', default_gas_prices, flat_TX_electricity_price, default_carbon_price, array_hot_stream[-1], array_cold_stream[-1])
-call_heat_pump('WA_flat', default_gas_prices, flat_WA_electricity_price, default_carbon_price, array_hot_stream[-1], array_cold_stream[-1])
-call_heat_pump('WI_flat', default_gas_prices, flat_WI_electricity_price, default_carbon_price, array_hot_stream[-1], array_cold_stream[-1])
+call_heat_pump(filename, default_gas_prices, default_electricity_prices, default_carbon_price, default_hot_stream_T, default_waste_stream_T)
+
+call_heat_pump('CA_flat', default_gas_prices, flat_CA_electricity_price, default_carbon_price, default_hot_stream_T, default_waste_stream_T)
+call_heat_pump('ID_flat', default_gas_prices, flat_ID_electricity_price, default_carbon_price, default_hot_stream_T, default_waste_stream_T)
+call_heat_pump('NY_flat', default_gas_prices, flat_NY_electricity_price, default_carbon_price, default_hot_stream_T, default_waste_stream_T)
+call_heat_pump('TX_flat', default_gas_prices, flat_TX_electricity_price, default_carbon_price, default_hot_stream_T, default_waste_stream_T)
+call_heat_pump('WA_flat', default_gas_prices, flat_WA_electricity_price, default_carbon_price, default_hot_stream_T, default_waste_stream_T)
+call_heat_pump('WI_flat', default_gas_prices, flat_WI_electricity_price, default_carbon_price, default_hot_stream_T, default_waste_stream_T)
 
 print('done')
 # Setting up TOU rates
