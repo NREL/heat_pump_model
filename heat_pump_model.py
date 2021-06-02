@@ -103,6 +103,8 @@ class heat_pump:
         self.gas_year_one_emissions = 0.0
 
         ##### 5. Cash Flow Model #####
+        self.kwh_CAGR = 0.00
+        self.gas_CAGR = 0.00
         self.net_present_value = -1.0
         self.internal_rate_of_return = -1.0
         self.payback_period = 100.0
@@ -344,10 +346,8 @@ class heat_pump:
 
     def calculate_cash_flow(self):  
         print('Calculate Cash Flow')
-
         # Compare to a new build natural gas plant
         annual_cashflow = []
-
         # If true, the full cost of the heat pump is included, if false, than 
         # the cost of the natural gas plant is subtracted from the capital cost of the heat pump to compare.
         if self.existing_gas == True:
@@ -357,14 +357,19 @@ class heat_pump:
         
         # The Cashflow model is always the cost saved by using the heat pump. 
         # The price of carbon is included in the cost of the natural gas plant.
-        for i in range(int(self.lifetime_yrs)):
-            annual_cashflow.append(self.gas_year_one_operating_costs - self.year_one_operating_costs)
+        for i in range(1, int(self.lifetime_yrs+1)):
+            gas_CAGR_energy_costs = self.gas_year_one_energy_costs*math.e**(i*math.log(1+self.gas_CAGR))
+            kwh_CAGR_energy_costs = self.year_one_energy_costs*math.e**(i*math.log(1+self.kwh_CAGR))
+            annual_gas_operating_cost = self.gas_year_one_fixed_o_and_m + self.gas_year_one_variable_o_and_m + self.gas_year_one_cost_of_emissions + gas_CAGR_energy_costs
+            annual_kwh_operating_cost = self.year_one_fixed_o_and_m + self.year_one_variable_o_and_m + kwh_CAGR_energy_costs
+            annual_cashflow.append(annual_gas_operating_cost - annual_kwh_operating_cost)
+            #print(i, 'gas', gas_CAGR_energy_costs, 'total', annual_gas_operating_cost)
 
         # Calculating and outputting
         self.net_present_value = round(npf.npv(self.discount_rate, annual_cashflow),2)
         print('NPV: $', self.net_present_value)
-        self.internal_rate_of_return = round(npf.irr(annual_cashflow),3)
-        print('IRR: ',round(self.internal_rate_of_return*100,2), '%')
+        self.internal_rate_of_return = round(npf.irr(annual_cashflow),3)*100
+        print('IRR: ',round(self.internal_rate_of_return,2), '%')
         # Need to calcuate year 1 energy Savings
         try:
             self.payback_period = math.log(1/(1-self.capital_cost*self.discount_rate/annual_cashflow[1]))/math.log(1+self.discount_rate)
@@ -418,7 +423,7 @@ class heat_pump:
             ['Gas Emissions',self.gas_year_one_emissions],
             ['Gas Social Cost of Emissions', self.gas_year_one_cost_of_emissions],
             ['Net Present Value', self.net_present_value],
-            ['Internal Rate of Return', self.internal_rate_of_return],
+            ['Internal Rate of Return pct', self.internal_rate_of_return],
             ['Payback Period', self.payback_period]
             ]
         
