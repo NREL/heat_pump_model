@@ -1,6 +1,9 @@
 ##### Importing Libraries
 from heat_pump_model import heat_pump
 from libraries import * 
+#import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import time
 
 def initialize_dict():
     heat_pump_dict = {
@@ -61,8 +64,8 @@ def call_heat_pump(heat_pump_dict):
     # Running the model
     hp.run_all(heat_pump_dict['filename'])
 
-
     del hp
+    return True
 
 ##### Setting up Iteration Arrays
 # For this work there are a lot of parameters, so setting up arrays that can be 
@@ -87,7 +90,7 @@ array_carbon_price = [*range(15, 125, 5)]
 #array_hot_stream = [*range(70, 155, 5)]
 
 array_electricity_price = []
-for i in range(10, 200):array_electricity_price.append(float(i/1000))
+for i in range(1, 20):array_electricity_price.append(float(i/100))
 array_gas_price = []
 for i in range(15,151):array_gas_price.append(float(i/10))
 
@@ -124,7 +127,7 @@ state_mmbtu_prices = {
     'WI_WE_Energies': 4.83 
 }
 
-# Base Case
+'''# Base Case
 heat_pump_dict = initialize_dict()
 call_heat_pump(heat_pump_dict)
 
@@ -161,17 +164,28 @@ for i in array_carbon_price:
     heat_pump_dict = initialize_dict()
     heat_pump_dict['filename'] = 'carbon_price_'+str(i)
     heat_pump_dict['carbon_price_per_ton'] = float(i)
-    call_heat_pump(heat_pump_dict)
+    call_heat_pump(heat_pump_dict)'''
 
 # Calculating Break-Even Cases
-for i in array_electricity_price:
-    for j in array_gas_price:
-        heat_pump_dict = initialize_dict()
-        heat_pump_dict['filename'] = 'break_even_kwh_'+str(i)+'_mmbtu_'+str(j)
-        heat_pump_dict['utility_rate_kwh'] = [float(i)]*8760
-        heat_pump_dict['gas_price'] = [float(j)]*8760
-        call_heat_pump(heat_pump_dict)
+# Make sure to run in a conditional
+if __name__ == '__main__':
+    futures = []
+    outs = []
+    with ProcessPoolExecutor() as executor:
+        for i in array_electricity_price:
+            for j in array_gas_price:
+                heat_pump_dict = initialize_dict()
+                heat_pump_dict['filename'] = 'break_even_kwh_'+str(i)+'_mmbtu_'+str(j)
+                heat_pump_dict['utility_rate_kwh'] = [float(i)]*8760
+                heat_pump_dict['gas_price'] = [float(j)]*8760
+                futures.append(executor.submit(call_heat_pump, heat_pump_dict))
 
+        for i,future in enumerate(as_completed(futures)):
+            outs.append(future.results())
+            print('{} out of {}'.format(i+1, len(futures)))
+
+
+'''
 # At $300/kW
 for i in array_electricity_price:
     for j in array_gas_price:
@@ -199,6 +213,6 @@ for i in cases:
     heat_pump_dict['utility_rate_kwh'] = [state_kwh_prices[i]]*8760
     heat_pump_dict['utility_rate_kw'] = state_kw_prices[i]
     heat_pump_dict['gas_price'] = [state_mmbtu_prices[i]]*8760
-    call_heat_pump(heat_pump_dict)
+    call_heat_pump(heat_pump_dict)'''
 
 print('done')
