@@ -7,13 +7,14 @@ import time
 
 def initialize_dict():
     heat_pump_dict = {
+        'print_results':False,
         'filename': 'base',
         'cold_temperature_available': 45,
         'hot_temperature_desired': 85,
         'hot_temperature_minimum': 80,
         'carnot_efficiency_factor': 0.45,
         'carnot_efficiency_factor_flag': True,
-        'capitol_cost_per_size': 600,
+        'capital_cost_per_size': 600,
         'fixed_o_and_m_percent': 2,
         'variable_o_and_m_per_mmbtu' : 0.05,
         'process_heat' : 1.85,
@@ -33,6 +34,9 @@ def call_heat_pump(heat_pump_dict):
     # Pulling Data From the Dict
     hp = heat_pump()
 
+    # IO 
+    hp.print_results = heat_pump_dict['print_results']
+
     # Temperature Data
     hp.cold_temperature_available = heat_pump_dict['cold_temperature_available']
     hp.hot_temperature_desired = heat_pump_dict['hot_temperature_desired']
@@ -41,8 +45,8 @@ def call_heat_pump(heat_pump_dict):
     hp.carnot_efficiency_factor_flag = heat_pump_dict['carnot_efficiency_factor_flag']
 
     # Capital Cost
-    hp.capital_cost_per_size = heat_pump_dict['capitol_cost_per_size']
-    hp.fixed_o_and_m_per_size = heat_pump_dict['fixed_o_and_m_percent']*heat_pump_dict['capitol_cost_per_size']/100
+    hp.capital_cost_per_size = heat_pump_dict['capital_cost_per_size']
+    hp.fixed_o_and_m_per_size = heat_pump_dict['fixed_o_and_m_percent']*heat_pump_dict['capital_cost_per_size']/100
     hp.variable_o_and_m_per_mmbtu = heat_pump_dict['variable_o_and_m_per_mmbtu']
 
     # Heat Requirements
@@ -135,7 +139,7 @@ call_heat_pump(heat_pump_dict)
 for i in array_capital_cost:
     heat_pump_dict = initialize_dict()
     heat_pump_dict['filename'] = 'capital_cost_'+str(i)
-    heat_pump_dict['capitol_cost_per_size'] = float(i)
+    heat_pump_dict['capital_cost_per_size'] = float(i)
     call_heat_pump(heat_pump_dict)
 
 # Lifetime Years
@@ -190,8 +194,8 @@ if __name__ == '__main__':
 for i in array_electricity_price:
     for j in array_gas_price:
         heat_pump_dict = initialize_dict()
-        heat_pump_dict['filename'] = 'capitol_300_break_even_kwh_'+str(i)+'_mmbtu_'+str(j)
-        heat_pump_dict['capitol_cost_per_size'] = 300
+        heat_pump_dict['filename'] = 'capital_300_break_even_kwh_'+str(i)+'_mmbtu_'+str(j)
+        heat_pump_dict['capital_cost_per_size'] = 300
         heat_pump_dict['utility_rate_kwh'] = [float(i)]*8760
         heat_pump_dict['gas_price'] = [float(j)]*8760
         call_heat_pump(heat_pump_dict)
@@ -200,8 +204,8 @@ for i in array_electricity_price:
 for i in array_electricity_price:
     for j in array_gas_price:
         heat_pump_dict = initialize_dict()
-        heat_pump_dict['filename'] = 'capitol_900_break_even_kwh_'+str(i)+'_mmbtu_'+str(j)
-        heat_pump_dict['capitol_cost_per_size'] = 900
+        heat_pump_dict['filename'] = 'capital_900_break_even_kwh_'+str(i)+'_mmbtu_'+str(j)
+        heat_pump_dict['capital_cost_per_size'] = 900
         heat_pump_dict['utility_rate_kwh'] = [float(i)]*8760
         heat_pump_dict['gas_price'] = [float(j)]*8760
         call_heat_pump(heat_pump_dict)

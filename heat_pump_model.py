@@ -24,6 +24,10 @@ from libraries import *
 class heat_pump:
     ##### Model Variables #####
     def __init__(self):
+        ##### IO #####
+        self.print_results = True
+        self.write_output_file = True
+
         ##### 1.COP #####
         ## Inputs
         self.cold_temperature_available = 50 # Common hot water waste Temp making up the 'cold stream avilable'
@@ -152,7 +156,7 @@ class heat_pump:
                     min_p_crit = p_crit
                     self.refrigerant = test_refrigerant
         else:
-            print(self.refrigerant)
+            if self.print_results: print(self.refrigerant)
 
         # Cycle calculation
         # Here the cycle points will be calculated. These points are:
@@ -210,7 +214,7 @@ class heat_pump:
                 self.compressor_efficiency = round(eta_vr*eta_pr, 3)
             
         except:
-            print('Flag: A Carnot Efficiency Factor was used here as there was an error with the refrigerant selections')
+            if self.print_results: print('Flag: A Carnot Efficiency Factor was used here as there was an error with the refrigerant selections')
             self.carnot_efficiency_factor_flag = True
             self.actual_COP = self.ideal_COP * self.carnot_efficiency_factor
 
@@ -218,31 +222,28 @@ class heat_pump:
         if self.carnot_efficiency_factor_flag == True:
             self.actual_COP = self.ideal_COP * self.carnot_efficiency_factor
         else:
-            print('Estimated Compressor Efficiency:', round(eta_pr,2))
+            if self.print_results: print('Estimated Compressor Efficiency:', round(eta_pr,2))
             #print('')
             #print('Warning: This program recommends a refrigerant for use. This recommendation is only a first step. \nRefrigerant selection should be further analyzed before implementation.')
-            print('')
             ## If no refrigerants are found, will use R245ca
             if len(self.refrigerant) > 0: 
-                print('Potential refigerants for this process include: ', self.refrigerant)
+                if self.print_results: print('Potential refigerants for this process include: ', self.refrigerant)
             else:
                 self.refrigerant.append('R245ca')
                 #print('Your process temperature was too high for known refrigerants, \nwill use R245ca for Analysis')
-            print('')
-            print('The recommended refrigerant for this process is: ', self.refrigerant)
-            print('')
+            if self.print_results: print('The recommended refrigerant for this process is: ', self.refrigerant)
             self.actual_COP = self.ideal_COP * self.compressor_efficiency
 
         
         self.ideal_COP = round(self.ideal_COP,2)
         self.actual_COP = round(self.actual_COP,2)
-        print('Calculate COP Called')
-        print('Theoretical COP: ', self.ideal_COP)
-        print('Estimated COP: ', self.actual_COP)
+        if self.print_results: print('Calculate COP Called')
+        if self.print_results: print('Theoretical COP: ', self.ideal_COP)
+        if self.print_results: print('Estimated COP: ', self.actual_COP)
 
     ## Calculating working fluid energy and mass balance
     def calculate_energy_and_mass_flow(self):
-        print('Calculate Energy and Mass Called')
+        if self.print_results: print('Calculate Energy and Mass Called')
 
         # Converting MMBTU to kWh/hr (as it is expressed for the full hours of the year)
         for i in range(0,8760):
@@ -258,21 +259,25 @@ class heat_pump:
         self.hot_mass_flowrate_average = round(np.average(self.hot_mass_flowrate),3)
         cold_dT_average = np.average(cold_dT_array)
         self.cold_final_temperature = round(self.cold_temperature_available - cold_dT_average,2)
-        print('Hot Mass Flow Average: ', self.hot_mass_flowrate_average, ' kg/s')
-        print('Cold Average Outlet Temperature: ', self.cold_final_temperature, '°C')
+
+        if self.print_results: 
+            print('Hot Mass Flow Average: ', self.hot_mass_flowrate_average, ' kg/s')
+            print('Cold Average Outlet Temperature: ', self.cold_final_temperature, '°C')
 
         # Calculating the Work into the heat pump
         for i in range(0,8760):
             self.power_in[i] = self.process_heat_requirement_kw[i]/self.actual_COP
         self.average_power_in = round(np.average(self.power_in),2)
         self.annual_energy_in = round(sum(self.power_in),1)
-        print('Average Power Draw of Heat Pump: ', self.average_power_in, ' kW')
-        print('Maximum Power Draw of Heat Pump: ', round(max(self.process_heat_requirement_kw)/self.actual_COP,1), ' kW')
-        print('Annual Electricity in: ', self.annual_energy_in, 'kWh')
+
+        if self.print_results: 
+            print('Average Power Draw of Heat Pump: ', self.average_power_in, ' kW')
+            print('Maximum Power Draw of Heat Pump: ', round(max(self.process_heat_requirement_kw)/self.actual_COP,1), ' kW')
+            print('Annual Electricity in: ', self.annual_energy_in, 'kWh')
 
     ## Calculating Heat Pump Costs
     def calculate_heat_pump_costs(self):
-        print('Calculate Heat Pump Costs')
+        if self.print_results: print('Calculate Heat Pump Costs')
         # Heat pump costs are estimated based on the maximum electrical power in.
         #self.capital_cost = self.capital_cost_per_size * max(self.power_in)
         # Heat pump costs are estimated based on the maximum thermal power required in kW
@@ -300,16 +305,17 @@ class heat_pump:
         self.LCOH = (self.capital_cost+ self.lifetime_yrs*self.year_one_operating_costs)/(self.lifetime_yrs*sum(self.process_heat_requirement))
         self.LCOH = round(self.LCOH,3)
 
-        print('Capital Cost: $',self.capital_cost)
-        print('One Year Fixed O&M Costs: $',self.year_one_fixed_o_and_m)
-        print('One Year Variable O&M Costs: $',self.year_one_variable_o_and_m)
-        print('One Year Energy Costs: $',self.year_one_energy_costs)
-        print('One Year Operating Costs: $', self.year_one_operating_costs)
-        print('Lifetime LCOH: ', self.LCOH, ' $/MMBTU')
+        if self.print_results: 
+            print('Capital Cost: $',self.capital_cost)
+            print('One Year Fixed O&M Costs: $',self.year_one_fixed_o_and_m)
+            print('One Year Variable O&M Costs: $',self.year_one_variable_o_and_m)
+            print('One Year Energy Costs: $',self.year_one_energy_costs)
+            print('One Year Operating Costs: $', self.year_one_operating_costs)
+            print('Lifetime LCOH: ', self.LCOH, ' $/MMBTU')
 
     ## Calculating Natural Gas Prices (might remake to be a repeat of heat pump and make ubiquitous)
     def calculate_natural_gas_comparison(self):
-        print('Calculate Natural Gas Comparison')
+        if self.print_results: print('Calculate Natural Gas Comparison')
         if self.existing_gas == True:
             self.gas_capital_cost = 0.0
         else:
@@ -337,15 +343,16 @@ class heat_pump:
         self.gas_LCOH = (self.gas_capital_cost+ self.lifetime_yrs*self.gas_year_one_operating_costs)/(self.lifetime_yrs*sum(self.process_heat_requirement))
         self.gas_LCOH = round(self.gas_LCOH,3)
 
-        print('Gas Capital Cost: $',self.gas_capital_cost)
-        print('Gas One Year Fixed O&M Costs: $',self.gas_year_one_fixed_o_and_m)
-        print('Gas One Year Variable O&M Costs: $',self.gas_year_one_variable_o_and_m)
-        print('Gas One Year Energy Costs: $',self.gas_year_one_energy_costs)
-        print('Gas One Year Operating Costs: $', self.gas_year_one_operating_costs)
-        print('Gas Lifetime LCOH: ', self.gas_LCOH, ' $/MMBTU')
+        if self.print_results: 
+            print('Gas Capital Cost: $',self.gas_capital_cost)
+            print('Gas One Year Fixed O&M Costs: $',self.gas_year_one_fixed_o_and_m)
+            print('Gas One Year Variable O&M Costs: $',self.gas_year_one_variable_o_and_m)
+            print('Gas One Year Energy Costs: $',self.gas_year_one_energy_costs)
+            print('Gas One Year Operating Costs: $', self.gas_year_one_operating_costs)
+            print('Gas Lifetime LCOH: ', self.gas_LCOH, ' $/MMBTU')
 
     def calculate_cash_flow(self):  
-        print('Calculate Cash Flow')
+        if self.print_results: print('Calculate Cash Flow')
         # Compare to a new build natural gas plant
         annual_cashflow = []
         # If true, the full cost of the heat pump is included, if false, than 
@@ -367,19 +374,17 @@ class heat_pump:
 
         # Calculating and outputting
         self.net_present_value = round(npf.npv(self.discount_rate, annual_cashflow),2)
-        print('NPV: $', self.net_present_value)
+        if self.print_results: print('NPV: $', self.net_present_value)
         self.internal_rate_of_return = round(npf.irr(annual_cashflow),3)*100
-        print('IRR: ',round(self.internal_rate_of_return,2), '%')
+        if self.print_results: print('IRR: ',round(self.internal_rate_of_return,2), '%')
         # Need to calcuate year 1 energy Savings
         try:
             self.payback_period = math.log(1/(1-self.capital_cost*self.discount_rate/annual_cashflow[1]))/math.log(1+self.discount_rate)
-            print('PBP: ', round(self.payback_period,2))
+            if self.print_results: print('PBP: ', round(self.payback_period,2))
         except:
             self.payback_period = 'NA'
-            print('PBP: ', self.payback_period)
+            if self.print_results: print('PBP: ', self.payback_period)
         
-        
-
     def write_output(self, filename):
         data = [
             ['Cold Temperature Available (C)',self.cold_temperature_available],
@@ -429,20 +434,14 @@ class heat_pump:
         
         df_output = pd.DataFrame(data,columns=['Variable','Value'])
         df_output.to_csv('output/'+filename+'.csv')
-        print('Writing all output to a file')
+        if self.print_results: print('Writing all output to a file')
 
     def run_all(self,filename):
-        print('')
         self.calculate_COP()
-        print('')
         self.calculate_energy_and_mass_flow()
-        print('')
         self.calculate_heat_pump_costs()
-        print('')
         self.calculate_natural_gas_comparison()
-        print('')
         self.calculate_cash_flow()
-        print('')
-        self.write_output(filename)
-        print('')
+        if self.write_output_file: self.write_output(filename)
+
 
