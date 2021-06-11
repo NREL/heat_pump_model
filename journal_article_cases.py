@@ -13,13 +13,14 @@ def initialize_dict():
         'hot_temperature_minimum': 80,
         'carnot_efficiency_factor': 0.45,
         'carnot_efficiency_factor_flag': True,
-        'capital_cost_per_size': 600,
-        'fixed_o_and_m_percent': 2,
-        'variable_o_and_m_per_mmbtu' : 0.05,
-        'process_heat' : 1.85,
+        'capital_cost_per_size': 300,
+        'fixed_o_and_m_percent': 5,
+        'variable_o_and_m_per_mmbtu' : 0.00,
+        'process_heat' : 18.5,
         'process_hours': 20,
         'lifetime_yrs': 20,
-        'gas_price': [6.5]*8760,
+        'gas_capital_cost' : 50000,
+        'gas_price': [4.5]*8760,
         'utility_rate_kwh': [0.02]*8760,
         'utility_rate_kw': 10,
         'carbon_price_per_ton': 0.0,
@@ -55,6 +56,7 @@ def call_heat_pump(heat_pump_dict):
 
     # Economics
     hp.lifetime_yrs = heat_pump_dict['lifetime_yrs']
+    hp.gas_capital_cost_per_size = heat_pump_dict['gas_capital_cost']
     hp.gas_price_MMBTU = heat_pump_dict['gas_price']
     hp.utility_rate_kwh = heat_pump_dict['utility_rate_kwh']
     hp.utility_rate_kw = heat_pump_dict['utility_rate_kw']
@@ -76,9 +78,10 @@ def call_heat_pump(heat_pump_dict):
 # iterated over.
 #array_heat_exchanger_efficiency = [2.5, 5.0, 7.5]
 #array_carnot_factors = [0.4, 0.45, 0.5, 0.55]
-array_compressor_efficiency = [0.6, 0.65, 0.7, 0.75, 0.8]
+#array_compressor_efficiency = [0.6, 0.65, 0.7, 0.75, 0.8]
 
-array_capital_cost =[*range(300,950,50)]
+array_capital_cost =[*range(150,1050,50)]
+array_gas_capital_cost = [*range(0, 105000, 5000)]
 array_lifetime_years = [10, 15, 20]
 array_FOM_percent = [2, 3, 4, 5, 6, 7, 8, 9, 10]
 array_VOM = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10]
@@ -106,14 +109,14 @@ state_kwh_prices = {
     'WI_WE_Energies': 0.05589
 }
 state_kw_prices = {
-    'CA': 15.0,
-    'ID': 15.0,
-    'NY': 15.0,
-    'TX': 15.0,
-    'WA': 15.0,
-    'WI': 15.0,
-    'WA_Grant_County': 17.73,
-    'WI_WE_Energies': 4.96
+    'CA': 0.0,
+    'ID': 0.0,
+    'NY': 0.0,
+    'TX': 0.0,
+    'WA': 0.0,
+    'WI': 0.0,
+    'WA_Grant_County': 4.96,
+    'WI_WE_Energies': 17.73
 }
 state_mmbtu_prices = {
     'CA': 7.62,
@@ -142,6 +145,15 @@ for i in array_capital_cost:
     print('case: ',  heat_pump_dict['filename'])
     heat_pump_dict['capital_cost_per_size'] = float(i)
     call_heat_pump(heat_pump_dict)
+
+# Gas Capital Cost
+for i in array_gas_capital_cost:
+    heat_pump_dict = initialize_dict()
+    heat_pump_dict['filename'] = 'gas_capital_cost_'+str(i)
+    print('case: ',  heat_pump_dict['filename'])
+    heat_pump_dict['gas_capital_cost'] = float(i)
+    call_heat_pump(heat_pump_dict)
+
 
 # Lifetime Years
 for i in array_lifetime_years:
@@ -185,13 +197,25 @@ for i in cases:
     heat_pump_dict['gas_price'] = [state_mmbtu_prices[i]]*8760
     call_heat_pump(heat_pump_dict)
 
+# Case Studies with Existing Gas
+for i in cases:
+    heat_pump_dict = initialize_dict()
+    heat_pump_dict['filename'] = i+'_existing_gas'
+    print('case: ',  heat_pump_dict['filename'])
+    heat_pump_dict['gas_capital_cost'] = 0
+    heat_pump_dict['utility_rate_kwh'] = [state_kwh_prices[i]]*8760
+    heat_pump_dict['utility_rate_kw'] = state_kw_prices[i]
+    heat_pump_dict['gas_price'] = [state_mmbtu_prices[i]]*8760
+    call_heat_pump(heat_pump_dict)
+
+
 ## For the Break-even cases we will not be making an output file but will be filling in a Pandas DataFrame
 array_electricity_price = []
 for i in range(10, 210):array_electricity_price.append(float(i/1000))
 array_gas_price = []
 for i in range(10,101):array_gas_price.append(float(i/10))
 columns = ['Capital Cost', 'Gas_Price', 'Electricity_Price', 'HP_LCOH', 'Gas_LCOH', 'NPV', 'IRR', 'PBP']
-array_capital_cost = [300, 600, 900]
+array_capital_cost = [150, 300, 600, 900]
 df_break_even = pd.DataFrame(0.0, index = range(len(array_capital_cost)*len(array_electricity_price)*len(array_gas_price)), columns = columns) 
 
 # Building the dataframe

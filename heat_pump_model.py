@@ -89,7 +89,7 @@ class heat_pump:
         
         ##### 4. Natural Gas Costs #####
         ## Inputs
-        self.gas_capital_cost_per_size = 250 #$/MMBTU/hr
+        self.gas_capital_cost_per_size = 90000 #$/MMBTU/hr
         self.gas_fixed_o_and_m_per_size = 50 # $/MMBTU/hr/year
         self.gas_variable_o_and_m_per_mmbtu = 0.01 # $/MMBTU
         self.gas_price_MMBTU = [3.5] * 8760 
@@ -379,7 +379,7 @@ class heat_pump:
         if self.print_results: print('IRR: ',round(self.internal_rate_of_return,2), '%')
         # Need to calcuate year 1 energy Savings
         try:
-            self.payback_period = math.log(1/(1-self.capital_cost*self.discount_rate/annual_cashflow[1]))/math.log(1+self.discount_rate)
+            self.payback_period = math.log(1/(1-(self.capital_cost-self.gas_capital_cost)*self.discount_rate/annual_cashflow[1]))/math.log(1+self.discount_rate)
             if self.print_results: print('PBP: ', round(self.payback_period,2))
         except:
             self.payback_period = 'NA'
