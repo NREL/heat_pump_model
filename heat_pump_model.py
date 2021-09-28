@@ -32,7 +32,7 @@ class heat_pump:
         ## Inputs
         self.cold_temperature_available = 50 # Common hot water waste Temp making up the 'cold stream avilable'
         self.hot_temperature_desired = 160  # Theoretical maximum of heat pumps as defaults
-        self.carnot_efficiency_factor = 0.5 # Ratio of Actual Efficiency to Carnot Efficiency (to be deprecated by better compressor model)
+        self.carnot_efficiency_factor = 0.45 # Ratio of Actual Efficiency to Carnot Efficiency (to be deprecated by better compressor model)
         # If the refrigerant selection process fails, the flag is changed to true so that it can be automatically analyzed post processing
         self.carnot_efficiency_factor_flag = False
         ## Outputs
