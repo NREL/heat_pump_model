@@ -50,10 +50,10 @@ class heat_pump:
         ##### 2.Energy and Mass Flow #####
         ## Inputs
         self.cold_specific_heat = 4.187 #kJ/kgK (Water)
-        self.cold_mass_flow = np.array([1]*8760) #kg/S 
+        self.cold_mass_flowrate = np.array([1]*8760) #kg/S 
         self.hot_specific_heat = 1.009 #kJ/kgK (Air)
-        self.hot_temperature_minimum = 145 # minimum allowable temperature of the hot stream
-        self.process_heat_requirement = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] * 365) # Meant to be in terms of MMBTU per hour
+        self.hot_temperature_minimum = np.array([145]*8760) # minimum allowable temperature of the hot stream
+        self.process_heat_requirement = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0] * 365) # Meant to be in terms of MMBTU per hour
         self.process_heat_requirement_kw = np.array([-1.0] * 8760)
         #self.process_power_kW = 1.055e6*self.process_heat_requirement/3600
         ## Outputs
@@ -75,8 +75,7 @@ class heat_pump:
         self.variable_o_and_m_per_mmbtu = 0.05 #$/MMBTU (Per MMBTU delivered, but likely will be based on hours and capacity factors)
         self.utility_rate_kwh = np.array([0.02] * 8760) #$/kWh over an 8760 timeframe
         self.utility_rate_kw = 10
-        # Because Power can be specified hourly, currently capacity factor is not used.
-        self.capacity_factor = np.array([1.0] * 8760) # Default to 8 hours per day 365
+        self.capacity_factor = -1.0 # Default to 8 hours per day 365
         self.lifetime_yrs = 20
         self.discount_rate = 0.04
         ## Outputs
@@ -224,34 +223,38 @@ class heat_pump:
     def calculate_energy_and_mass_flow(self):
         if self.print_results: print('Calculate Energy and Mass Called')
 
+        # Initializing Temporary Arrays
+        hot_dT_array = np.array([-1.0]*8760)
+        cold_dT_array = np.array([-1.0]*8760)
+
         # Converting MMBTU to kWh/hr (as it is expressed for the full hours of the year)
-        for i in range(0,8760):
-            self.process_heat_requirement_kw[i] = self.process_heat_requirement[i] * 1.055e6/3600
+        self.process_heat_requirement_kw = self.process_heat_requirement * (1.055e6/3600.0)
 
         # Calculating the Hot and Cold Mass Flow Parameters
-        hot_dT = self.hot_temperature_desired - self.hot_temperature_minimum 
-        cold_dT_array = [-1.0]*8760
-        for i in range(0,8760):
-            self.hot_mass_flowrate[i] = self.process_heat_requirement_kw[i]/(hot_dT*self.hot_specific_heat)/3600
-            cold_dT_array[i] = self.process_heat_requirement_kw[i]/(self.cold_mass_flow[i]*self.cold_specific_heat)
+        ## Hot
+        hot_dT_array = self.hot_temperature_desired - self.hot_temperature_minimum 
+        self.hot_mass_flowrate = self.process_heat_requirement_kw/(hot_dT_array*(self.hot_specific_heat))
+        ## Cold
+        cold_dT_array = self.process_heat_requirement_kw/(self.cold_mass_flowrate*self.cold_specific_heat)
+        self.cold_final_temperature = self.cold_temperature_available - cold_dT_array
     
+        # Getting average values for reporting
         self.hot_mass_flowrate_average = round(np.average(self.hot_mass_flowrate),3)
-        cold_dT_average = np.average(cold_dT_array)
-        self.cold_final_temperature = round(self.cold_temperature_available - cold_dT_average,2)
-
+        
         if self.print_results: 
             print('Hot Mass Flow Average: ', self.hot_mass_flowrate_average, ' kg/s')
-            print('Cold Average Outlet Temperature: ', self.cold_final_temperature, '°C')
+            print('Cold Average Outlet Temperature: ', round(np.average(self.cold_final_temperature),2), '°C')
 
         # Calculating the Work into the heat pump
-        for i in range(0,8760):
-            self.power_in[i] = self.process_heat_requirement_kw[i]/self.actual_COP
+        self.power_in = self.process_heat_requirement_kw/self.actual_COP
+        #for i in range(0,8760):
+        #    self.power_in[i] = self.process_heat_requirement_kw[i]/self.actual_COP
         self.average_power_in = round(np.average(self.power_in),2)
         self.annual_energy_in = round(sum(self.power_in),1)
 
         if self.print_results: 
             print('Average Power Draw of Heat Pump: ', self.average_power_in, ' kW')
-            print('Maximum Power Draw of Heat Pump: ', round(max(self.process_heat_requirement_kw)/self.actual_COP,1), ' kW')
+            print('Maximum Power Draw of Heat Pump: ', round(np.amax(self.power_in),1), ' kW')
             print('Annual Electricity in: ', self.annual_energy_in, 'kWh')
 
     ## Calculating Heat Pump Costs
@@ -262,22 +265,21 @@ class heat_pump:
         # Heat pump costs are estimated based on the maximum thermal power required in kW
         self.capital_cost = self.capital_cost_per_size * max(self.process_heat_requirement_kw)
         self.capital_cost = round(self.capital_cost,2)
-        self.year_one_fixed_o_and_m = self.fixed_o_and_m_per_size*max(self.process_heat_requirement_kw)
+        self.year_one_fixed_o_and_m = self.fixed_o_and_m_per_size*np.amax(self.process_heat_requirement_kw)
         self.year_one_fixed_o_and_m = round(self.year_one_fixed_o_and_m,2)
-        self.year_one_variable_o_and_m = self.variable_o_and_m_per_mmbtu*sum(self.process_heat_requirement)
+        self.year_one_variable_o_and_m = self.variable_o_and_m_per_mmbtu*np.sum(self.process_heat_requirement)
         self.year_one_variable_o_and_m = round(self.year_one_variable_o_and_m,2)
 
         # Calculating the Capacity Factor
-        for i in range(0,8760):
-            self.capacity_factor[i] = self.process_heat_requirement_kw[i]/max(self.process_heat_requirement_kw)
+        self.capacity_factor = np.sum(self.process_heat_requirement_kw)/(8760*np.max(self.process_heat_requirement_kw))
 
         # Calculating the kWh costs
-        kwh_costs = []
-        for i in range(0,8760):
-            kwh_costs.append(self.utility_rate_kwh[i]*self.power_in[i])
-        kw_costs = 12*self.utility_rate_kw*max(self.process_heat_requirement)/self.actual_COP
+        kwh_costs = np.array([0.0]*8760)
+        kwh_costs = self.utility_rate_kwh*self.power_in
+        # Currently demand charges are taken from the largest demand
+        kw_costs = 12*self.utility_rate_kw*np.amax(self.power_in)
 
-        self.year_one_energy_costs = round(sum(kwh_costs)+kw_costs,2)
+        self.year_one_energy_costs = round(np.sum(kwh_costs)+kw_costs,2)
         self.year_one_operating_costs = self.year_one_fixed_o_and_m + self.year_one_variable_o_and_m + self.year_one_energy_costs
         self.year_one_operating_costs = round(self.year_one_operating_costs,2)
 
@@ -286,6 +288,7 @@ class heat_pump:
 
         if self.print_results: 
             print('Capital Cost: $',self.capital_cost)
+            print('Capacity Factor: ', self.capacity_factor)
             print('One Year Fixed O&M Costs: $',self.year_one_fixed_o_and_m)
             print('One Year Variable O&M Costs: $',self.year_one_variable_o_and_m)
             print('One Year Energy Costs: $',self.year_one_energy_costs)
@@ -298,11 +301,11 @@ class heat_pump:
         if self.existing_gas == True:
             self.gas_capital_cost = 0.0
         else:
-            self.gas_capital_cost = self.gas_capital_cost_per_size * max(self.process_heat_requirement)/self.gas_efficiency
+            self.gas_capital_cost = self.gas_capital_cost_per_size * np.max(self.process_heat_requirement)/self.gas_efficiency
             self.gas_capital_cost = round(self.gas_capital_cost,2)
-        self.gas_year_one_fixed_o_and_m = self.gas_fixed_o_and_m_per_size*max(self.process_heat_requirement)
+        self.gas_year_one_fixed_o_and_m = self.gas_fixed_o_and_m_per_size*np.max(self.process_heat_requirement)
         self.gas_year_one_fixed_o_and_m = round(self.gas_year_one_fixed_o_and_m,2)
-        self.gas_year_one_variable_o_and_m = self.gas_variable_o_and_m_per_mmbtu*sum(self.process_heat_requirement)/self.gas_efficiency
+        self.gas_year_one_variable_o_and_m = self.gas_variable_o_and_m_per_mmbtu*np.sum(self.process_heat_requirement)/self.gas_efficiency
         self.gas_year_one_variable_o_and_m = round(self.gas_year_one_variable_o_and_m,2)
 
         # Calculating Emissions
@@ -312,10 +315,9 @@ class heat_pump:
         self.gas_year_one_emissions = (sum(self.process_heat_requirement)/self.gas_efficiency) * self.gas_emissions_factor /(1020*2000)
         self.gas_year_one_cost_of_emissions =   round((self.carbon_price_per_ton * self.gas_year_one_emissions),2)
 
-        costs = 0.0
-        for i in range(0,8760):
-            costs = costs + (self.gas_price_MMBTU[i]*self.process_heat_requirement[i])
-        self.gas_year_one_energy_costs = round(costs,2)
+        fuel_costs = np.array([0.0]*8760)
+        fuel_costs = self.gas_price_MMBTU*self.process_heat_requirement
+        self.gas_year_one_energy_costs = round(np.sum(fuel_costs),2)
         self.gas_year_one_operating_costs = self.gas_year_one_fixed_o_and_m + self.gas_year_one_variable_o_and_m + self.gas_year_one_energy_costs +self.gas_year_one_cost_of_emissions 
         self.gas_year_one_operating_costs = round(self.gas_year_one_operating_costs,2)
 
@@ -368,7 +370,7 @@ class heat_pump:
         data = [
             ['Cold Temperature Available (C)',self.cold_temperature_available],
             ['Cold Temperature Final (C)',self.cold_final_temperature],
-            ['Cold Mass Flowrate (kg/s)', np.average(self.cold_mass_flow)],
+            ['Cold Mass Flowrate (kg/s)', np.average(self.cold_mass_flowrate)],
             ['Hot Temperature Desired (C)', self.hot_temperature_desired],
             ['Hot Temperature Minimum (C)', self.hot_temperature_minimum],
             ['Hot Mass Flowrate (kg/s)', self.hot_mass_flowrate_average],
