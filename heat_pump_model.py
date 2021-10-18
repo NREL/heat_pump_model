@@ -53,7 +53,7 @@ class heat_pump:
         self.cold_mass_flow = [1]*8760 #kg/S 
         self.hot_specific_heat = 1.009 #kJ/kgK (Air)
         self.hot_temperature_minimum = 145 # minimum allowable temperature of the hot stream
-        self.process_heat_requirement = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] * 365 # Meant to be in terms of MMBUT per hour
+        self.process_heat_requirement = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] * 365 # Meant to be in terms of MMBTU per hour
         self.process_heat_requirement_kw = [-1.0] * 8760 
         #self.process_power_kW = 1.055e6*self.process_heat_requirement/3600
         ## Outputs
@@ -122,7 +122,7 @@ class heat_pump:
         self.schedule = 'industrial'
     
     ## This subroutine within the heat pump class Initializes the heat pump to a process in the process library.
-    ## This initialization is not essential as all values can be input individually, but this modul is built to 
+    ## This initialization is not essential as all values can be input individually, but this module is built to 
     ## simplify the building of the models.
     def initialize_heat_pump(self,sector,process_name):
         self.hot_temperature_desired = process[sector][process_name]['hot_temperature_desired']
