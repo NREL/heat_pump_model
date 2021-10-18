@@ -1,4 +1,5 @@
 from heat_pump_model import heat_pump
+import numpy as np
 
 from libraries import * 
 
@@ -8,7 +9,7 @@ for j in process:
         values = process[j][i]
         print(values)
         test_heat_pump = heat_pump()
-        test_heat_pump.gas_price_MMBTU = [1.8] * 8760 
+        test_heat_pump.gas_price_MMBTU = np.array([1.8] * 8760)
         test_heat_pump.initialize_heat_pump(j,i)
         test_heat_pump.run_all(i)
 
