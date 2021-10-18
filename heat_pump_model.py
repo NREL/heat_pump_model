@@ -30,19 +30,19 @@ class heat_pump:
 
         ##### 1.COP #####
         ## Inputs
-        self.cold_temperature_available = 50 # Common hot water waste Temp making up the 'cold stream avilable'
-        self.hot_temperature_desired = 160  # Theoretical maximum of heat pumps as defaults
+        self.cold_temperature_available = np.array([50]*8760) # Common hot water waste Temp making up the 'cold stream avilable'
+        self.hot_temperature_desired = np.array([160]*8760)  # Theoretical maximum of heat pumps as defaults
         self.carnot_efficiency_factor = 0.5 # Ratio of Actual Efficiency to Carnot Efficiency (to be deprecated by better compressor model)
         # If the refrigerant selection process fails, the flag is changed to true so that it can be automatically analyzed post processing
-        self.carnot_efficiency_factor_flag = False
+        self.carnot_efficiency_factor_flag = True
         ## Outputs
-        self.ideal_COP = -1.0
-        self.actual_COP = -1.0
+        self.ideal_COP = np.array([-1.0]*8760)
+        self.actual_COP = np.array([-1.0]*8760)
         self.refrigerant = []
         # The hot and cold buffer are the temperature difference between the working fluid and the hot and cold streams, a measure of the heat exchanger efficiency
-        self.cold_buffer = 5.0
-        self.hot_buffer = 5.0
-        self.compressor_efficiency = -1.0
+        self.cold_buffer = np.array([5.0]*8760)
+        self.hot_buffer = np.array([5.0]*8760)
+        self.compressor_efficiency = np.array([-1.0]*8760)
         # Setting a default refrigerant
         self.refrigerant = 'R1234ze(Z)'
         self.refrigerant_flag = False
@@ -50,16 +50,16 @@ class heat_pump:
         ##### 2.Energy and Mass Flow #####
         ## Inputs
         self.cold_specific_heat = 4.187 #kJ/kgK (Water)
-        self.cold_mass_flow = [1]*8760 #kg/S 
+        self.cold_mass_flow = np.array([1]*8760) #kg/S 
         self.hot_specific_heat = 1.009 #kJ/kgK (Air)
         self.hot_temperature_minimum = 145 # minimum allowable temperature of the hot stream
-        self.process_heat_requirement = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] * 365 # Meant to be in terms of MMBTU per hour
-        self.process_heat_requirement_kw = [-1.0] * 8760 
+        self.process_heat_requirement = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] * 365) # Meant to be in terms of MMBTU per hour
+        self.process_heat_requirement_kw = np.array([-1.0] * 8760)
         #self.process_power_kW = 1.055e6*self.process_heat_requirement/3600
         ## Outputs
-        self.cold_final_temperature = -1.0
-        self.hot_mass_flowrate = [-1.0]*8760
-        self.power_in = [-1.0]*8760 # Gives the Energy into the heat pump in power
+        self.cold_final_temperature = np.array([-1.0]*8760)
+        self.hot_mass_flowrate = np.array([-1.0]*8760)
+        self.power_in = np.array([-1.0]*8760) # Gives the Energy into the heat pump in power
         self.average_power_in = -1.0
         self.annual_energy_in = -1.0
 
@@ -73,10 +73,10 @@ class heat_pump:
         # Yearly O&M is assumed at 2.0% of capital cost
         self.fixed_o_and_m_per_size = 0.02*self.capital_cost_per_size # $/MMBTU/hr/year (Assuming here that it is based on the maximum heating load size)
         self.variable_o_and_m_per_mmbtu = 0.05 #$/MMBTU (Per MMBTU delivered, but likely will be based on hours and capacity factors)
-        self.utility_rate_kwh = [0.02] * 8760 #$/kWh over an 8760 timeframe
+        self.utility_rate_kwh = np.array([0.02] * 8760) #$/kWh over an 8760 timeframe
         self.utility_rate_kw = 10
         # Because Power can be specified hourly, currently capacity factor is not used.
-        self.capacity_factor = [1.0] * 8760 # Default to 8 hours per day 365
+        self.capacity_factor = np.array([1.0] * 8760) # Default to 8 hours per day 365
         self.lifetime_yrs = 20
         self.discount_rate = 0.04
         ## Outputs
@@ -92,7 +92,7 @@ class heat_pump:
         self.gas_capital_cost_per_size = 90000 #$/MMBTU/hr
         self.gas_fixed_o_and_m_per_size = 50 # $/MMBTU/hr/year
         self.gas_variable_o_and_m_per_mmbtu = 0.01 # $/MMBTU
-        self.gas_price_MMBTU = [3.5] * 8760 
+        self.gas_price_MMBTU = np.array([3.5] * 8760)
         self.gas_efficiency = 0.8
         self.gas_emissions_factor = 120000
         ## Outputs
@@ -125,10 +125,10 @@ class heat_pump:
     ## This initialization is not essential as all values can be input individually, but this module is built to 
     ## simplify the building of the models.
     def initialize_heat_pump(self,sector,process_name):
-        self.hot_temperature_desired = process[sector][process_name]['hot_temperature_desired']
-        self.hot_temperature_minimum = process[sector][process_name]['hot_temperature_minimum']
+        self.hot_temperature_desired = np.array([process[sector][process_name]['hot_temperature_desired']]*8760)
+        self.hot_temperature_minimum = np.array([process[sector][process_name]['hot_temperature_minimum']]*8760)
         self.hot_specific_heat = working_fluid[process[sector][process_name]['hot_working_fluid']]['specific_heat']
-        self.cold_temperature_available = process[sector][process_name]['waste_temperature']
+        self.cold_temperature_available = np.array([process[sector][process_name]['waste_temperature']]*8760)
 
     ##### Model Calculations #####
     ## Calculating the COP
@@ -137,109 +137,88 @@ class heat_pump:
         # Calculating the ideal COP to begin with, this will be independent of the future anlaysis.
         self.ideal_COP = (self.hot_temperature_desired + 273.0)/(self.hot_temperature_desired - self.cold_temperature_available)
 
-        # Below will attempt to choose a refrigerant and calculate a realistic compressor efficiency from it, if this fails, it will revert to the carnot efficiency factor methodology
-        ## Estimating Refrigerant Performance
-        if self.refrigerant_flag != True:
-            self.refrigerant = []
-            for test_refrigerant in refrigerants:
-                t_crit = PropsSI(test_refrigerant, 'Tcrit') - 273.15
-                ## Checking if the refrigerant's critical temperature is at least 5°C > than the process temp.
-                if t_crit > (self.hot_temperature_desired + 10):
-                    self.refrigerant.append(test_refrigerant)
-            
-            ## Here the refrigerant with the lowest critical pressure, and therefore hopefully the lowest compression ratio
-            ## is found and that will be recommended
-            min_p_crit = 1e9
-            for test_refrigerant in refrigerants:
-                p_crit = PropsSI(test_refrigerant, 'Pcrit') 
-                if p_crit < min_p_crit:
-                    min_p_crit = p_crit
-                    self.refrigerant = test_refrigerant
-        else:
-            if self.print_results: print(self.refrigerant)
-
-        # Cycle calculation
-        # Here the cycle points will be calculated. These points are:
-        #  1. Compressor inlet
-        #  2. Compressor outlet
-        #  3. Expansion valve inlet
-        #  4. Expansion valve outlet
-        #  2-3 is the condenser where heat is expelled from the heat pump condenser to the heat sink or high temperature working fluid stream
-        #  4-1 is the evaporator where heat is absorbed from the heat source or cold temperature working fluid to the heat pump evaporator
-
-        self.refrigerant_high_temperature_kelvin = self.hot_temperature_desired + self.hot_buffer + 273.15
-        self.refrigerant_low_temperature_kelvin = self.cold_temperature_available - self.cold_buffer + 273.15
-        
-        T_1 = 273.15+self.cold_temperature_available - self.cold_buffer
-        T_3 = 273.15+self.hot_temperature_desired + self.hot_buffer
-
-        # Calculating Cycle Parameters
-        try:
-            try:
-                P_1 = PropsSI('P', 'T', T_1, 'Q', 1, self.refrigerant)
-                S_1 = PropsSI('S', 'T', T_1, 'Q', 1, self.refrigerant)
-                H_1 = PropsSI('H', 'T', T_1, 'Q', 1, self.refrigerant)
-
-                P_3 = PropsSI('P', 'T', T_3, 'Q', 0, self.refrigerant)
-                S_3 = PropsSI('S', 'T', T_3, 'Q', 0, self.refrigerant)
-                H_3 = PropsSI('H', 'T', T_3, 'Q', 0, self.refrigerant)
-
-                T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
-                H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
-                P_2 = P_3
-            
-            except:
-                #print('The refrigerant previously selected went super critical or did not meet \nother parameters, for the purposes of the COP calculation the refrigerant \nwill be replaced with R245ca.')
-                self.refrigerant = 'R245ca'
-                P_1 = PropsSI('P', 'T', T_1, 'Q', 1, self.refrigerant)
-                S_1 = PropsSI('S', 'T', T_1, 'Q', 1, self.refrigerant)
-                H_1 = PropsSI('H', 'T', T_1, 'Q', 1, self.refrigerant)
-
-                P_3 = PropsSI('P', 'T', T_3, 'Q', 0, self.refrigerant)
-                S_3 = PropsSI('S', 'T', T_3, 'Q', 0, self.refrigerant)
-                H_3 = PropsSI('H', 'T', T_3, 'Q', 0, self.refrigerant)
-
-                T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
-                H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
-                P_2 = P_3
-        
-            PR = P_2/P_1
-            # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
-            # The VR is taken from experimental values which we do not fully have, so will integrate as part of year 2
-            # For now the VR is set to a constant value.
-            # The compressor efficiency can also be set by the user
-            eta_pr = 0.95-0.01*PR
-            eta_vr = 0.70
-            if self.compressor_efficiency < 0.0:
-                self.compressor_efficiency = round(eta_vr*eta_pr, 3)
-            
-        except:
-            if self.print_results: print('Flag: A Carnot Efficiency Factor was used here as there was an error with the refrigerant selections')
-            self.carnot_efficiency_factor_flag = True
-            self.actual_COP = self.ideal_COP * self.carnot_efficiency_factor
-
-        # if the User manually defines the carnot efficincy flag as true, then the calculation will always convert to this.
         if self.carnot_efficiency_factor_flag == True:
+            # If the carnot efficiency factor is true calculation the actual COP
             self.actual_COP = self.ideal_COP * self.carnot_efficiency_factor
         else:
-            if self.print_results: print('Estimated Compressor Efficiency:', round(eta_pr,2))
-            #print('')
-            #print('Warning: This program recommends a refrigerant for use. This recommendation is only a first step. \nRefrigerant selection should be further analyzed before implementation.')
-            ## If no refrigerants are found, will use R245ca
-            if len(self.refrigerant) > 0: 
-                if self.print_results: print('Potential refigerants for this process include: ', self.refrigerant)
-            else:
-                self.refrigerant.append('R245ca')
-                #print('Your process temperature was too high for known refrigerants, \nwill use R245ca for Analysis')
-            if self.print_results: print('The recommended refrigerant for this process is: ', self.refrigerant)
-            self.actual_COP = self.ideal_COP * self.compressor_efficiency
+            # If the carnot efficiency factor is false requires more work in several steps
+            # 1. If no refrigerant is selected pick one
+            # 2. Using selected refrigerant calculate compressor efficiency
+            # 3. Calculate actual COP from compressor efficiency
+            # 4. Throw an error if calculation could not be completed.
 
-        
-        self.ideal_COP = round(self.ideal_COP,2)
-        self.actual_COP = round(self.actual_COP,2)
+            # Below will attempt to choose a refrigerant and calculate a realistic compressor efficiency from it, if this fails, it will revert to the carnot efficiency factor methodology
+            ## Estimating Refrigerant Performance
+            if self.refrigerant_flag != True:
+                self.refrigerant = []
+                for test_refrigerant in refrigerants:
+                    t_crit = PropsSI(test_refrigerant, 'Tcrit') - 273.15
+                    ## Checking if the refrigerant's critical temperature is at least 5°C > than the process temp.
+                    if t_crit > (np.amax(self.hot_temperature_desired) + 30):
+                        self.refrigerant.append(test_refrigerant)
+                
+                print('Potential refrigerants include: ', self.refrigerant)
+                ## Here the refrigerant with the lowest critical pressure, and therefore hopefully the lowest compression ratio
+                ## is found and that will be recommended
+                ## Need to update to reflect the fact that best refrigerant might not be the one with the lowest critical pressure
+                min_p_crit = 1e9
+                for test_refrigerant in self.refrigerant:
+                    p_crit = PropsSI(test_refrigerant, 'Pcrit') 
+                    if p_crit < min_p_crit:
+                        min_p_crit = p_crit
+                        self.refrigerant = test_refrigerant
+
+            print('Selected refrigerant (based on user selection or minimual p_crit) is: ', self.refrigerant)
+
+            ## Adjust such that this is below the Carnot Efficiency Factor 
+            # Cycle calculation
+            # Here the cycle points will be calculated. These points are:
+            #  1. Compressor inlet
+            #  2. Compressor outlet
+            #  3. Expansion valve inlet
+            #  4. Expansion valve outlet
+            #  2-3 is the condenser where heat is expelled from the heat pump condenser to the heat sink or high temperature working fluid stream
+            #  4-1 is the evaporator where heat is absorbed from the heat source or cold temperature working fluid to the heat pump evaporator
+            self.refrigerant_high_temperature_kelvin = self.hot_temperature_desired + self.hot_buffer + 273.15
+            self.refrigerant_low_temperature_kelvin = self.cold_temperature_available - self.cold_buffer + 273.15
+
+            try:
+                for i in range(8760):
+                    T_1 = self.refrigerant_low_temperature_kelvin[i]
+                    T_3 = self.refrigerant_high_temperature_kelvin[i]
+
+                    # Calculating Cycle Parameters
+                    P_1 = PropsSI('P', 'T', T_1, 'Q', 1, self.refrigerant)
+                    S_1 = PropsSI('S', 'T', T_1, 'Q', 1, self.refrigerant)
+                    H_1 = PropsSI('H', 'T', T_1, 'Q', 1, self.refrigerant)
+
+                    P_3 = PropsSI('P', 'T', T_3, 'Q', 0, self.refrigerant)
+                    S_3 = PropsSI('S', 'T', T_3, 'Q', 0, self.refrigerant)
+                    H_3 = PropsSI('H', 'T', T_3, 'Q', 0, self.refrigerant)
+
+                    T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
+                    H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
+                    P_2 = P_3
+
+                    PR = P_2/P_1
+                    # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
+                    # The VR is taken from experimental values which we do not fully have, so will integrate as part of year 2
+                    # For now the VR is set to a constant value.
+                    # The compressor efficiency can also be set by the user
+                    eta_pr = 0.95-0.01*PR
+                    eta_vr = 0.70
+
+                    self.compressor_efficiency[i] = round(eta_vr*eta_pr, 3)
+                    
+                self.actual_COP = self.ideal_COP * self.compressor_efficiency
+
+            except:
+                print('There was an error calling refrigerant properties. Please check inputs and try again.')
+                quit()
+
         if self.print_results: print('Calculate COP Called')
-        if self.print_results: print('Theoretical COP: ', self.ideal_COP)
-        if self.print_results: print('Estimated COP: ', self.actual_COP)
+        if self.print_results: print('Average Theoretical COP: ', round(np.average(self.ideal_COP),2))
+        if self.print_results: print('Average Estimated COP: ', round(np.average(self.actual_COP),2))
 
     ## Calculating working fluid energy and mass balance
     def calculate_energy_and_mass_flow(self):
