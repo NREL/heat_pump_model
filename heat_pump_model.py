@@ -12,6 +12,7 @@ from CoolProp.Plots import PropertyPlot
 from CoolProp.Plots import SimpleCompressionCycle
 
 from libraries import *
+from refrigerant_properties import*
 
 ## Note: Default values set to -1.0 need to be calculated and are initialized, but will 
 ## return an error if not calculated first.
@@ -50,7 +51,7 @@ class heat_pump:
         ##### 2.Energy and Mass Flow #####
         ## Inputs
         self.cold_specific_heat = 4.187 #kJ/kgK (Water)
-        self.cold_mass_flowrate = np.array([1]*8760) #kg/S 
+        self.cold_mass_flowrate = np.array([-1.0]*8760) #kg/S 
         self.hot_specific_heat = 1.009 #kJ/kgK (Air)
         self.hot_temperature_minimum = np.array([145]*8760) # minimum allowable temperature of the hot stream
         self.process_heat_requirement = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0] * 365) # Meant to be in terms of MMBTU per hour
@@ -77,7 +78,7 @@ class heat_pump:
         self.utility_rate_kw = 10
         self.capacity_factor = -1.0 # Default to 8 hours per day 365
         self.lifetime_yrs = 20
-        self.discount_rate = 0.04
+        self.discount_rate = 0.10
         ## Outputs
         self.capital_cost = -1.0
         self.year_one_energy_costs = -1.0
@@ -134,7 +135,7 @@ class heat_pump:
     def calculate_COP(self):
         
         # Calculating the ideal COP to begin with, this will be independent of the future anlaysis.
-        self.ideal_COP = (self.hot_temperature_desired + 273.0)/(self.hot_temperature_desired - self.cold_temperature_available)
+        self.ideal_COP = ((self.hot_temperature_desired + self.hot_buffer)+ 273.0 )/((self.hot_temperature_desired + self.hot_buffer) - (self.cold_temperature_available - self.cold_buffer))
 
         if self.carnot_efficiency_factor_flag == True:
             # If the carnot efficiency factor is true calculation the actual COP
@@ -235,8 +236,10 @@ class heat_pump:
         hot_dT_array = self.hot_temperature_desired - self.hot_temperature_minimum 
         self.hot_mass_flowrate = self.process_heat_requirement_kw/(hot_dT_array*(self.hot_specific_heat))
         ## Cold
-        cold_dT_array = self.process_heat_requirement_kw/(self.cold_mass_flowrate*self.cold_specific_heat)
+        cold_dT_array = self.cold_buffer - 1.0
+        #cold_dT_array = self.process_heat_requirement_kw/(self.cold_mass_flowrate*self.cold_specific_heat)
         self.cold_final_temperature = self.cold_temperature_available - cold_dT_array
+        self.cold_mass_flowrate = self.process_heat_requirement_kw/(cold_dT_array*(self.cold_specific_heat))
     
         # Getting average values for reporting
         self.hot_mass_flowrate_average = round(np.average(self.hot_mass_flowrate),3)
