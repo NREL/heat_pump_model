@@ -43,7 +43,7 @@ class heat_pump:
         # The hot and cold buffer are the temperature difference between the working fluid and the hot and cold streams, a measure of the heat exchanger efficiency
         self.cold_buffer = np.array([5.0]*8760)
         self.hot_buffer = np.array([5.0]*8760)
-        self.compressor_efficiency = np.array([-1.0]*8760)
+        self.compressor_efficiency = 0.7  # np.array([-1.0]*8760)
         # Setting a default refrigerant
         self.refrigerant = 'R1234ze(Z)'
         self.refrigerant_flag = False
@@ -199,18 +199,20 @@ class heat_pump:
                     T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
                     H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
                     P_2 = P_3
+                    H_2_prime = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
+                    H_2 = H_1 + (H_2_prime - H_1)/self.compressor_efficiency # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
+                    T_2 = PropsSI('T', 'H', H_2, 'P', P_2, self.refrigerant)
+                    self.actual_COP[i] = (H_2 - H_3) / (H_2 - H_1)
 
-                    PR = P_2/P_1
                     # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
                     # The VR is taken from experimental values which we do not fully have, so will integrate as part of year 2
                     # For now the VR is set to a constant value.
                     # The compressor efficiency can also be set by the user
-                    eta_pr = 0.95-0.01*PR
-                    eta_vr = 0.70
-
-                    self.compressor_efficiency[i] = round(eta_vr*eta_pr, 3)
-                    
-                self.actual_COP = self.ideal_COP * self.compressor_efficiency
+                    # PR = P_2/P_1
+                    # eta_pr = 0.95-0.01*PR
+                    # eta_vr = 0.70
+                    # self.compressor_efficiency[i] = round(eta_vr*eta_pr, 3)
+                    # self.actual_COP = self.ideal_COP * self.compressor_efficiency
 
             except:
                 print('There was an error calling refrigerant properties. Please check inputs and try again.')
