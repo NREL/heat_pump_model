@@ -1,13 +1,14 @@
 from heat_pump_model import heat_pump
 from libraries import * 
 import numpy as np
+from utilities.unit_defs import ureg, Q_
 
 hp_test = heat_pump()
-hp_test.hot_temperature_desired = np.array([90]*8760)
-hp_test.hot_temperature_minimum = np.array([80]*8760)
-hp_test.cold_temperature_available = np.array([60]*8760)
-hp_test.gas_price_MMBTU = np.array([4.5] * 8760) 
-hp_test.carnot_efficiency_factor = 0.50
+hp_test.hot_temperature_desired = Q_(np.array([90]*8760), 'degC')
+hp_test.hot_temperature_minimum = Q_(np.array([80]*8760), 'degC')
+hp_test.cold_temperature_available = Q_(np.array([60]*8760), 'degC')
+hp_test.gas_price_MMBTU = Q_(np.array([4.5] * 8760), 'USD / MMBtu')
+hp_test.carnot_efficiency_factor = Q_('0.50')
 hp_test.carnot_efficiency_factor_flag = True
 
 #hp_test.compressor_efficiency = 0.65
