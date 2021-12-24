@@ -190,21 +190,21 @@ class heat_pump:
                     T_3 = self.refrigerant_high_temperature_kelvin[i]
 
                     # Calculating Cycle Parameters
-                    P_1 = Q_(PropsSI('P', 'T', T_1.m, 'Q', 1, self.refrigerant), 'Pa')
-                    S_1 = Q_(PropsSI('S', 'T', T_1.m, 'Q', 1, self.refrigerant), 'J / kg / degK')
-                    H_1 = Q_(PropsSI('H', 'T', T_1.m, 'Q', 1, self.refrigerant), 'J / kg')
+                    P_1 = PropsSI('P', 'T', T_1.m, 'Q', 1, self.refrigerant)
+                    S_1 = PropsSI('S', 'T', T_1.m, 'Q', 1, self.refrigerant)
+                    H_1 = PropsSI('H', 'T', T_1.m, 'Q', 1, self.refrigerant)
 
-                    P_3 = Q_(PropsSI('P', 'T', T_3.m, 'Q', 0, self.refrigerant), 'Pa')
-                    S_3 = Q_(PropsSI('S', 'T', T_3.m, 'Q', 0, self.refrigerant), 'J / kg / degK')
-                    H_3 = Q_(PropsSI('H', 'T', T_3.m, 'Q', 0, self.refrigerant), 'J / kg')
+                    P_3 = PropsSI('P', 'T', T_3.m, 'Q', 0, self.refrigerant)
+                    S_3 = PropsSI('S', 'T', T_3.m, 'Q', 0, self.refrigerant)
+                    H_3 = PropsSI('H', 'T', T_3.m, 'Q', 0, self.refrigerant)
 
-                    T_2 = Q_(PropsSI('T', 'S', S_1.m, 'P', P_3.m, self.refrigerant), 'degK')
-                    H_2 = Q_(PropsSI('H', 'S', S_1.m, 'P', P_3.m, self.refrigerant), 'J / kg')
+                    T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
+                    H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
 
                     P_2 = P_3
-                    H_2_prime = Q_(PropsSI('H', 'S', S_1.m, 'P', P_3.m, self.refrigerant), 'J / kg')
+                    H_2_prime = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
                     H_2 = H_1 + (H_2_prime - H_1)/self.compressor_efficiency # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
-                    T_2 = Q_(PropsSI('T', 'H', H_2.m, 'P', P_2.m, self.refrigerant), 'degK')
+                    T_2 = PropsSI('T', 'H', H_2, 'P', P_2, self.refrigerant)
                     self.actual_COP[i] = (H_2 - H_3) / (H_2 - H_1)
 
                     # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
