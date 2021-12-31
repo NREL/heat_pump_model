@@ -185,27 +185,27 @@ class heat_pump:
             self.refrigerant_low_temperature_kelvin = self.cold_temperature_available.to(ureg.degK) - self.cold_buffer.to(ureg.degK)
 
             try:
-                for i in range(8760):
-                    T_1 = self.refrigerant_low_temperature_kelvin[i]
-                    T_3 = self.refrigerant_high_temperature_kelvin[i]
+                # for i in range(8760):
+                    T_1 = np.array(self.refrigerant_low_temperature_kelvin.m)
+                    T_3 = np.array(self.refrigerant_high_temperature_kelvin.m)
 
                     # Calculating Cycle Parameters
-                    P_1 = PropsSI('P', 'T', T_1.m, 'Q', 1, self.refrigerant)
-                    S_1 = PropsSI('S', 'T', T_1.m, 'Q', 1, self.refrigerant)
-                    H_1 = PropsSI('H', 'T', T_1.m, 'Q', 1, self.refrigerant)
+                    P_1 = PropsSI('P', 'T', T_1, 'Q', 1, self.refrigerant)
+                    S_1 = PropsSI('S', 'T', T_1, 'Q', 1, self.refrigerant)
+                    H_1 = PropsSI('H', 'T', T_1, 'Q', 1, self.refrigerant)
 
-                    P_3 = PropsSI('P', 'T', T_3.m, 'Q', 0, self.refrigerant)
-                    S_3 = PropsSI('S', 'T', T_3.m, 'Q', 0, self.refrigerant)
-                    H_3 = PropsSI('H', 'T', T_3.m, 'Q', 0, self.refrigerant)
+                    P_3 = PropsSI('P', 'T', T_3, 'Q', 0, self.refrigerant)
+                    S_3 = PropsSI('S', 'T', T_3, 'Q', 0, self.refrigerant)
+                    H_3 = PropsSI('H', 'T', T_3, 'Q', 0, self.refrigerant)
 
                     T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
                     H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
 
                     P_2 = P_3
                     H_2_prime = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
-                    H_2 = H_1 + (H_2_prime - H_1)/self.compressor_efficiency # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
+                    H_2 = H_1 + (H_2_prime - H_1)/(self.compressor_efficiency.m) # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
                     T_2 = PropsSI('T', 'H', H_2, 'P', P_2, self.refrigerant)
-                    self.actual_COP[i] = (H_2 - H_3) / (H_2 - H_1)
+                    self.actual_COP = (np.divide((H_2 - H_3), (H_2 - H_1)))*ureg.dimensionless
 
                     # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
                     # The VR is taken from experimental values which we do not fully have, so will integrate as part of year 2
