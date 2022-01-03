@@ -82,10 +82,10 @@ class heat_pump:
         self.discount_rate = 0.10
         ## Outputs
         self.capital_cost = Q_('-1.0 USD')
-        self.year_one_energy_costs = Q_('-1.0 USD')
-        self.year_one_fixed_o_and_m = Q_('-1.0 USD')
-        self.year_one_variable_o_and_m = Q_('-1.0 USD')
-        self.year_one_operating_costs = Q_('-1.0 USD')
+        self.year_one_energy_costs = Q_('-1.0 USD/yr')
+        self.year_one_fixed_o_and_m = Q_('-1.0 USD/yr')
+        self.year_one_variable_o_and_m = Q_('-1.0 USD/yr')
+        self.year_one_operating_costs = Q_('-1.0 USD/yr')
         self.LCOH = Q_('-1.0 USD / MMMBtu')
         
         ##### 4. Natural Gas Costs #####
@@ -99,10 +99,10 @@ class heat_pump:
         self.gas_emissions_volume_per_energy = Q_('(1 MMSCF) / (1020 MMBtu)')
         ## Outputs
         self.gas_capital_cost = Q_('-1.0 USD')
-        self.gas_year_one_energy_costs = Q_('-1.0 USD')
-        self.gas_year_one_fixed_o_and_m = Q_('-1.0 USD')
-        self.gas_year_one_variable_o_and_m = Q_('-1.0 USD')
-        self.gas_year_one_operating_costs = Q_('-1.0 USD')
+        self.gas_year_one_energy_costs = Q_('-1.0 USD/yr')
+        self.gas_year_one_fixed_o_and_m = Q_('-1.0 USD/yr')
+        self.gas_year_one_variable_o_and_m = Q_('-1.0 USD/yr')
+        self.gas_year_one_operating_costs = Q_('-1.0 USD/yr')
         self.gas_LCOH = Q_('-1.0 USD / (MW * hr)')
         # Emissions
         self.carbon_price_per_ton = Q_('0.0 USD / ton')
@@ -185,37 +185,36 @@ class heat_pump:
             self.refrigerant_low_temperature_kelvin = self.cold_temperature_available.to(ureg.degK) - self.cold_buffer.to(ureg.degK)
 
             try:
-                # for i in range(8760):
-                    T_1 = np.array(self.refrigerant_low_temperature_kelvin.m)
-                    T_3 = np.array(self.refrigerant_high_temperature_kelvin.m)
+                T_1 = np.array(self.refrigerant_low_temperature_kelvin.m)
+                T_3 = np.array(self.refrigerant_high_temperature_kelvin.m)
 
-                    # Calculating Cycle Parameters
-                    P_1 = PropsSI('P', 'T', T_1, 'Q', 1, self.refrigerant)
-                    S_1 = PropsSI('S', 'T', T_1, 'Q', 1, self.refrigerant)
-                    H_1 = PropsSI('H', 'T', T_1, 'Q', 1, self.refrigerant)
+                # Calculating Cycle Parameters
+                P_1 = PropsSI('P', 'T', T_1, 'Q', 1, self.refrigerant)
+                S_1 = PropsSI('S', 'T', T_1, 'Q', 1, self.refrigerant)
+                H_1 = PropsSI('H', 'T', T_1, 'Q', 1, self.refrigerant)
 
-                    P_3 = PropsSI('P', 'T', T_3, 'Q', 0, self.refrigerant)
-                    S_3 = PropsSI('S', 'T', T_3, 'Q', 0, self.refrigerant)
-                    H_3 = PropsSI('H', 'T', T_3, 'Q', 0, self.refrigerant)
+                P_3 = PropsSI('P', 'T', T_3, 'Q', 0, self.refrigerant)
+                S_3 = PropsSI('S', 'T', T_3, 'Q', 0, self.refrigerant)
+                H_3 = PropsSI('H', 'T', T_3, 'Q', 0, self.refrigerant)
 
-                    T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
-                    H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
+                T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
+                H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
 
-                    P_2 = P_3
-                    H_2_prime = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
-                    H_2 = H_1 + (H_2_prime - H_1)/(self.compressor_efficiency.m) # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
-                    T_2 = PropsSI('T', 'H', H_2, 'P', P_2, self.refrigerant)
-                    self.actual_COP = (np.divide((H_2 - H_3), (H_2 - H_1)))*ureg.dimensionless
+                P_2 = P_3
+                H_2_prime = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
+                H_2 = H_1 + (H_2_prime - H_1)/(self.compressor_efficiency.m) # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
+                T_2 = PropsSI('T', 'H', H_2, 'P', P_2, self.refrigerant)
+                self.actual_COP = (np.divide((H_2 - H_3), (H_2 - H_1)))*ureg.dimensionless
 
-                    # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
-                    # The VR is taken from experimental values which we do not fully have, so will integrate as part of year 2
-                    # For now the VR is set to a constant value.
-                    # The compressor efficiency can also be set by the user
-                    # PR = P_2/P_1
-                    # eta_pr = 0.95-0.01*PR
-                    # eta_vr = 0.70
-                    # self.compressor_efficiency[i] = round(eta_vr*eta_pr, 3)
-                    # self.actual_COP = self.ideal_COP * self.compressor_efficiency
+                # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
+                # The VR is taken from experimental values which we do not fully have, so will integrate as part of year 2
+                # For now the VR is set to a constant value.
+                # The compressor efficiency can also be set by the user
+                # PR = P_2/P_1
+                # eta_pr = 0.95-0.01*PR
+                # eta_vr = 0.70
+                # self.compressor_efficiency[i] = round(eta_vr*eta_pr, 3)
+                # self.actual_COP = self.ideal_COP * self.compressor_efficiency
 
             except:
                 print('There was an error calling refrigerant properties. Please check inputs and try again.')
@@ -247,7 +246,7 @@ class heat_pump:
         self.cold_mass_flowrate = self.process_heat_requirement_kw/(cold_dT_array*(self.cold_specific_heat))
     
         # Getting average values for reporting
-        self.hot_mass_flowrate_average = round(np.average(self.hot_mass_flowrate),3)
+        self.hot_mass_flowrate_average = round(np.average(self.hot_mass_flowrate),3).to('kg /s')
         
         if self.print_results: 
             print('Hot Mass Flow Average: {:~P}'.format(self.hot_mass_flowrate_average))
@@ -258,7 +257,7 @@ class heat_pump:
         #for i in range(0,8760):
         #    self.power_in[i] = self.process_heat_requirement_kw[i]/self.actual_COP
         self.average_power_in = round(np.average(self.power_in),2)
-        self.annual_energy_in = round(sum(self.power_in),1)
+        self.annual_energy_in = round(sum(self.power_in*Q_('1 hour')),1).to('kWh')
 
         if self.print_results: 
             print('Average Power Draw of Heat Pump: {:~P}'.format(self.average_power_in))
@@ -275,7 +274,7 @@ class heat_pump:
         self.capital_cost = round(self.capital_cost,2)
         self.year_one_fixed_o_and_m = self.fixed_o_and_m_per_size*np.amax(self.process_heat_requirement)/Q_('1 yr')
         self.year_one_fixed_o_and_m = round(self.year_one_fixed_o_and_m,2)
-        self.year_one_variable_o_and_m = self.variable_o_and_m_per_mmbtu*np.sum(self.process_heat_requirement.to('MMBtu / yr'))
+        self.year_one_variable_o_and_m = self.variable_o_and_m_per_mmbtu*np.sum(self.process_heat_requirement*Q_('1 hr'))/Q_('1 yr')
         self.year_one_variable_o_and_m = round(self.year_one_variable_o_and_m,2)
 
         # Calculating the Capacity Factor
@@ -285,13 +284,13 @@ class heat_pump:
         kwh_costs = Q_(np.array([0.0]*8760), 'USD')
         kwh_costs = self.utility_rate_kwh*self.power_in*Q_('1 hr')
         # Currently demand charges are taken from the largest demand
-        kw_costs = 12*self.utility_rate_kw*np.amax(self.power_in)
+        kw_costs = 12*self.utility_rate_kw*np.amax(self.power_in) # What is this 12? What are the units?
 
         self.year_one_energy_costs = round(np.sum(kwh_costs)+kw_costs,2)/Q_('1 yr')
         self.year_one_operating_costs = self.year_one_fixed_o_and_m + self.year_one_variable_o_and_m + self.year_one_energy_costs
         self.year_one_operating_costs = round(self.year_one_operating_costs,2)
 
-        self.LCOH = (self.capital_cost+ self.lifetime_yrs*self.year_one_operating_costs)/(self.lifetime_yrs*sum(self.process_heat_requirement.to('MMBtu / yr')))
+        self.LCOH = (self.capital_cost + self.lifetime_yrs*self.year_one_operating_costs)/(self.lifetime_yrs*sum(self.process_heat_requirement*Q_('1 hr'))/Q_('1 yr'))
         self.LCOH = round(self.LCOH,3)
 
         if self.print_results: 
@@ -313,7 +312,7 @@ class heat_pump:
             self.gas_capital_cost = round(self.gas_capital_cost,2)
         self.gas_year_one_fixed_o_and_m = self.gas_fixed_o_and_m_per_size*np.max(self.process_heat_requirement)
         self.gas_year_one_fixed_o_and_m = round(self.gas_year_one_fixed_o_and_m,2)
-        self.gas_year_one_variable_o_and_m = self.gas_variable_o_and_m_per_mmbtu*np.sum(self.process_heat_requirement.to('MMBtu/yr'))/self.gas_efficiency
+        self.gas_year_one_variable_o_and_m = self.gas_variable_o_and_m_per_mmbtu*np.sum(self.process_heat_requirement*Q_('1 hr'))/(Q_('1 yr')*self.gas_efficiency)
         self.gas_year_one_variable_o_and_m = round(self.gas_year_one_variable_o_and_m,2)
 
         # Calculating Emissions
@@ -326,12 +325,12 @@ class heat_pump:
 
         fuel_costs = Q_(np.array([0.0]*8760), 'USD/hr')
         fuel_costs = self.gas_price_MMBTU*self.process_heat_requirement
-        self.gas_year_one_energy_costs = round(np.sum(fuel_costs.to('USD/yr')),2)
+        self.gas_year_one_energy_costs = round(np.sum(fuel_costs*Q_('1 hr')),2)/Q_('1 yr')
         self.gas_year_one_operating_costs = self.gas_year_one_fixed_o_and_m + self.gas_year_one_variable_o_and_m + self.gas_year_one_energy_costs + self.gas_year_one_cost_of_emissions 
         self.gas_year_one_operating_costs = round(self.gas_year_one_operating_costs,2)
 
-        self.gas_LCOH = (self.gas_capital_cost+ self.lifetime_yrs*self.gas_year_one_operating_costs)/(self.lifetime_yrs*sum(self.process_heat_requirement))
-        self.gas_LCOH = round(self.gas_LCOH,3)
+        self.gas_LCOH = (self.gas_capital_cost+ self.lifetime_yrs*self.gas_year_one_operating_costs)/(self.lifetime_yrs*sum(self.process_heat_requirement*Q_('1 hr'))/Q_('1 yr'))
+        self.gas_LCOH = round(self.gas_LCOH.to('USD/MMBtu'),3)
 
         if self.print_results: 
             print('Gas Capital Cost: {:~P}'.format(self.gas_capital_cost))
@@ -365,7 +364,7 @@ class heat_pump:
         # Calculating and outputting (pint not working well with npf, so using some workarounds for now)
         self.net_present_value = Q_(round(npf.npv(self.discount_rate, annual_cashflow),2), 'USD')
         if self.print_results: print('NPV: {:~P}'.format(self.net_present_value))
-        self.internal_rate_of_return = Q_(round(npf.irr(annual_cashflow),3), 'dimensionless')
+        self.internal_rate_of_return = Q_(round(npf.irr(annual_cashflow),3), 'dimensionless').to('pct')
         if self.print_results: print('IRR: {:~P}'.format(round(self.internal_rate_of_return,2)))
         # Need to calcuate year 1 energy Savings
         try:
@@ -379,7 +378,7 @@ class heat_pump:
         data = [
             ['Cold Temperature Available {:~P}'.format(self.cold_temperature_available)],
             ['Cold Temperature Final {:~P}'.format(self.cold_final_temperature)],
-            ['Cold Mass Flowrate {:~P}'.format(np.average(self.cold_mass_flowrate))],
+            ['Cold Mass Flowrate {:~P}'.format(np.average(self.cold_mass_flowrate).to('kg / s'))],
             ['Hot Temperature Desired {:~P}'.format(self.hot_temperature_desired)],
             ['Hot Temperature Minimum {:~P}'.format(self.hot_temperature_minimum)],
             ['Hot Mass Flowrate {:~P}'.format(self.hot_mass_flowrate_average)],
