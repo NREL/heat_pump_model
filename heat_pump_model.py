@@ -127,10 +127,10 @@ class heat_pump:
     ## This initialization is not essential as all values can be input individually, but this module is built to 
     ## simplify the building of the models.
     def initialize_heat_pump(self,sector,process_name):
-        self.hot_temperature_desired = np.array([process[sector][process_name]['hot_temperature_desired']]*8760)
-        self.hot_temperature_minimum = np.array([process[sector][process_name]['hot_temperature_minimum']]*8760)
-        self.hot_specific_heat = working_fluid[process[sector][process_name]['hot_working_fluid']]['specific_heat']
-        self.cold_temperature_available = np.array([process[sector][process_name]['waste_temperature']]*8760)
+        self.hot_temperature_desired = Q_(np.array([process[sector][process_name]['hot_temperature_desired']]*8760), 'degC')
+        self.hot_temperature_minimum = Q_(np.array([process[sector][process_name]['hot_temperature_minimum']]*8760), 'degC')
+        self.hot_specific_heat = Q_(working_fluid[process[sector][process_name]['hot_working_fluid']]['specific_heat'], 'kJ / kg / degK')
+        self.cold_temperature_available = Q_(np.array([process[sector][process_name]['waste_temperature']]*8760), 'degC')
 
     ##### Model Calculations #####
     ## Calculating the COP
@@ -229,8 +229,8 @@ class heat_pump:
         if self.print_results: print('Calculate Energy and Mass Called')
 
         # Initializing Temporary Arrays
-        hot_dT_array = Q_(np.array([-1.0]*8760), 'delta_degC')
-        cold_dT_array = Q_(np.array([-1.0]*8760), 'delta_degC')
+        hot_dT_array = Q_(np.array([-1.0]*8760), 'degK')
+        cold_dT_array = Q_(np.array([-1.0]*8760), 'degK')
 
         # Converting MMBTU to kWh/hr (as it is expressed for the full hours of the year)
         self.process_heat_requirement_kw = self.process_heat_requirement.to(ureg.kW)
