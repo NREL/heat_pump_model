@@ -199,7 +199,9 @@ class heat_pump:
                     T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
                     H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
                     P_2 = P_3
+                    #H_2_prime assumes isentropic operations
                     H_2_prime = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
+                    #H_2 is then found by adjusting for the compressor efficiency
                     H_2 = H_1 + (H_2_prime - H_1)/self.compressor_efficiency # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
                     T_2 = PropsSI('T', 'H', H_2, 'P', P_2, self.refrigerant)
                     self.actual_COP[i] = (H_2 - H_3) / (H_2 - H_1)
