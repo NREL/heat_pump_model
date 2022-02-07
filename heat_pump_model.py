@@ -51,9 +51,11 @@ class heat_pump:
 
         ##### 2.Energy and Mass Flow #####
         ## Inputs
-        self.cold_specific_heat = Q_('4.187 kJ / kg / degK') # Water
-        self.cold_mass_flowrate = np.array([-1.0]*8760)*ureg('kg / s')
-        self.hot_specific_heat = Q_('1.009 kJ / kg / degK') # Air
+        self.cold_refrigerant = 'water'
+        self.cold_pressure = Q_(np.array([1.0]*8760), 'atm')
+        self.cold_mass_flowrate = Q_(np.array([-1.0]*8760), 'kg / s')
+        self.hot_refrigerant = 'air'
+        self.hot_pressure = Q_(np.array([1.0]*8760), 'atm')
         self.hot_temperature_minimum = Q_(np.array([145]*8760), 'degC') # minimum allowable temperature of the hot stream
         self.process_heat_requirement = Q_(np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0] * 365), 'MMBtu / hr')
         # self.process_heat_requirement_kw = Q_(np.array([-1.0] * 8760), 'kW')
@@ -229,21 +231,27 @@ class heat_pump:
         if self.print_results: print('Calculate Energy and Mass Called')
 
         # Initializing Temporary Arrays
-        hot_dT_array = Q_(np.array([-1.0]*8760), 'degK')
-        cold_dT_array = Q_(np.array([-1.0]*8760), 'degK')
+        h_hi = Q_(np.array([-1.0]*8760), 'J/kg')
+        h_ho = Q_(np.array([-1.0]*8760), 'J/kg')
+        h_ci = Q_(np.array([-1.0]*8760), 'J/kg')
+        h_co = Q_(np.array([-1.0]*8760), 'J/kg')
 
         # Converting MMBTU to kWh/hr (as it is expressed for the full hours of the year)
         # self.process_heat_requirement_kw = self.process_heat_requirement.to(ureg.kW)
 
         # Calculating the Hot and Cold Mass Flow Parameters
         ## Hot
-        hot_dT_array = self.hot_temperature_desired - self.hot_temperature_minimum
-        self.hot_mass_flowrate = self.process_heat_requirement.to('kW')/(hot_dT_array*(self.hot_specific_heat))
+        h_hi = Q_(PropsSI('H', 'T', self.hot_temperature_minimum.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
+        h_ho = Q_(PropsSI('H', 'T', self.hot_temperature_desired.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
+        self.hot_mass_flowrate = self.process_heat_requirement.to('W')/(h_ho - h_hi)
         ## Cold
         cold_dT_array = self.cold_buffer - Q_('1.0 delta_degC')
         #cold_dT_array = self.process_heat_requirement_kw/(self.cold_mass_flowrate*self.cold_specific_heat)
+
+        h_ci = Q_(PropsSI('H', 'T', self.cold_temperature_available.to('degK').m, 'P', self.cold_pressure.to('Pa').m, self.cold_refrigerant), 'J/kg')
         self.cold_final_temperature = self.cold_temperature_available - cold_dT_array
-        self.cold_mass_flowrate = self.process_heat_requirement.to('kW')/(cold_dT_array*(self.cold_specific_heat))
+        h_co = Q_(PropsSI('H', 'T', self.cold_final_temperature.to('degK').m, 'P', self.cold_pressure.to('Pa').m, self.cold_refrigerant), 'J/kg')
+        self.cold_mass_flowrate = self.process_heat_requirement.to('W')/(h_ci - h_co)
     
         # Getting average values for reporting
         self.hot_mass_flowrate_average = round(np.average(self.hot_mass_flowrate),3).to('kg /s')
