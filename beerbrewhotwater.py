@@ -7,7 +7,7 @@ from utilities.unit_defs import Q_
 
 hp_steam_gen = heat_pump()
 hp_steam_gen.hot_temperature_desired = Q_(np.array([115]*8760), 'degC')
-hp_steam_gen.hot_temperature_minimum = Q_(np.array([85]*8760), 'degC')
+hp_steam_gen.hot_temperature_minimum = Q_(np.array([70]*8760), 'degC')
 hp_steam_gen.hot_refrigerant = 'Water'
 rho_sg = Q_(PropsSI('D', 'T', hp_steam_gen.hot_temperature_minimum.to('degK').m, 'P|liquid', hp_steam_gen.hot_pressure.to('Pa').m, hp_steam_gen.hot_refrigerant), 'kg/m^3')
 hp_steam_gen.hot_mass_flowrate = Q_(np.append([1240000/6264] * 6264, [0] * (2496)), 'gal/hr')*rho_sg

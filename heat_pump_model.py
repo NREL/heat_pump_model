@@ -287,7 +287,6 @@ class heat_pump:
         #self.capital_cost = self.capital_cost_per_size * max(self.power_in)
         # Heat pump costs are estimated based on the maximum thermal power required in kW
         self.capital_cost = self.capital_cost_per_size * max(self.process_heat_requirement.to('kW'))
-        self.capital_cost = self.capital_cost
         self.year_one_fixed_o_and_m = self.fixed_o_and_m_per_size*np.amax(self.process_heat_requirement.to('MMBtu/hr'))/Q_('1 yr')
         self.year_one_fixed_o_and_m = self.year_one_fixed_o_and_m
         self.year_one_variable_o_and_m = self.variable_o_and_m*np.sum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr')
