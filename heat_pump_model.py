@@ -7,6 +7,7 @@ import pandas as pd
 import requests
 import csv
 import CoolProp
+import yaml
 from CoolProp.CoolProp import PropsSI 
 from CoolProp.Plots import PropertyPlot
 from CoolProp.Plots import SimpleCompressionCycle
@@ -54,7 +55,7 @@ class heat_pump:
         ##### 2.Energy and Mass Flow #####
         ## Inputs
         self.cold_refrigerant = 'water'
-        self.cold_pressure = Q_(np.array([1.0]*8760), 'atm')
+        # self.cold_pressure = Q_(np.array([1.0]*8760), 'atm')
         self.cold_mass_flowrate = []
         self.hot_refrigerant = 'air'
         self.hot_pressure = Q_(np.array([1.0]*8760), 'atm')
@@ -126,6 +127,32 @@ class heat_pump:
         self.long = -105.16888
         self.schedule = 'industrial'
     
+    def construct_yaml_input_quantities(self, file_path):
+        with open(file_path, "r") as file_desc:
+            input_dict = yaml.safe_load(file_desc)
+
+        for key in input_dict:
+            var = input_dict[key]
+            try:
+                if not isinstance(var, dict):
+                    continue
+                elif 'unc' in var:
+                    if 'hourly' in var and var['hourly'] is True:
+                        quant = Q_(np.array([uf(var['val'], var['unc'])]*8760), var['unit'])
+                    else:
+                        quant = Q_(uf(var['val'], var['unc']), var['unit'])
+                else:
+                    if 'hourly' in var and var['hourly'] is True:
+                        quant = Q_(np.array([var['val']]*8760), var['unit'])
+                    else:
+                        quant = Q_(var['val'], var['unit'])
+                input_dict[key] = quant
+            except KeyError:
+                print('Something is wrong with input variable ' + key)
+                quit()
+        self.__dict__.update(input_dict)
+
+
     ## This subroutine within the heat pump class Initializes the heat pump to a process in the process library.
     ## This initialization is not essential as all values can be input individually, but this module is built to 
     ## simplify the building of the models.
@@ -184,8 +211,8 @@ class heat_pump:
             #  4. Expansion valve outlet
             #  2-3 is the condenser where heat is expelled from the heat pump condenser to the heat sink or high temperature working fluid stream
             #  4-1 is the evaporator where heat is absorbed from the heat source or cold temperature working fluid to the heat pump evaporator
-            self.refrigerant_high_temperature = self.hot_temperature_desired.to(ureg.degK) + self.hot_buffer.to(ureg.degK)
-            self.refrigerant_low_temperature = self.cold_temperature_available.to(ureg.degK) - self.cold_buffer.to(ureg.degK)
+            self.refrigerant_high_temperature = unp.nominal_values(self.hot_temperature_desired.to(ureg.degK)) + unp.nominal_values(self.hot_buffer.to(ureg.degK))
+            self.refrigerant_low_temperature = unp.nominal_values(self.cold_temperature_available.to(ureg.degK)) - unp.nominal_values(self.cold_buffer.to(ureg.degK))
 
             try:
                 T_1 = np.array(self.refrigerant_low_temperature.m)
@@ -224,8 +251,8 @@ class heat_pump:
                 quit()
 
         if self.print_results: print('Calculate COP Called')
-        if self.print_results: print('Average Theoretical COP: ', round(np.mean(self.ideal_COP),2))
-        if self.print_results: print('Average Estimated COP: ', round(np.mean(self.actual_COP),2))
+        if self.print_results: print('Average Theoretical COP: ', np.mean(self.ideal_COP))
+        if self.print_results: print('Average Estimated COP: ', np.mean(self.actual_COP))
 
     ## Calculating working fluid energy and mass balance
     def calculate_energy_and_mass_flow(self):
@@ -242,8 +269,8 @@ class heat_pump:
 
         # Calculating the Hot and Cold Mass Flow Parameters
         ## Hot
-        h_hi = Q_(PropsSI('H', 'T', self.hot_temperature_minimum.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
-        h_ho = Q_(PropsSI('H', 'T', self.hot_temperature_desired.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
+        h_hi = Q_(PropsSI('H', 'T', unp.nominal_values(self.hot_temperature_minimum.to('degK').m), 'P', unp.nominal_values(self.hot_pressure.to('Pa').m), self.hot_refrigerant), 'J/kg')
+        h_ho = Q_(PropsSI('H', 'T', unp.nominal_values(self.hot_temperature_desired.to('degK').m), 'P', unp.nominal_values(self.hot_pressure.to('Pa').m), self.hot_refrigerant), 'J/kg')
         try:
             if (len(self.hot_mass_flowrate) == 0) and (len(self.process_heat_requirement) != 0):
                 self.hot_mass_flowrate = (self.process_heat_requirement.to('W')/(h_ho - h_hi)).to('kg/s')
@@ -256,9 +283,9 @@ class heat_pump:
         ## Cold
         cold_dT_array = self.cold_buffer - Q_('1.0 delta_degC')
 
-        h_ci = Q_(PropsSI('H', 'T', self.cold_temperature_available.to('degK').m, 'P', self.cold_pressure.to('Pa').m, self.cold_refrigerant), 'J/kg')
+        h_ci = Q_(PropsSI('H', 'T', unp.nominal_values(self.cold_temperature_available.to('degK').m), 'P', unp.nominal_values(self.cold_pressure.to('Pa').m), self.cold_refrigerant), 'J/kg')
         self.cold_final_temperature = self.cold_temperature_available - cold_dT_array
-        h_co = Q_(PropsSI('H', 'T', self.cold_final_temperature.to('degK').m, 'P', self.cold_pressure.to('Pa').m, self.cold_refrigerant), 'J/kg')
+        h_co = Q_(PropsSI('H', 'T', unp.nominal_values(self.cold_final_temperature.to('degK').m), 'P', unp.nominal_values(self.cold_pressure.to('Pa').m), self.cold_refrigerant), 'J/kg')
         self.cold_mass_flowrate = self.process_heat_requirement.to('W')/(h_ci - h_co)
     
         # Getting average values for reporting
@@ -266,7 +293,7 @@ class heat_pump:
         
         if self.print_results: 
             print('Hot Mass Flow Average: {:~.3P}'.format(self.hot_mass_flowrate_average))
-            print('Cold Average Outlet Temperature: {:~.2fP}'.format(round(np.mean(self.cold_final_temperature),2)))
+            print('Cold Average Outlet Temperature: {:~.2fP}'.format(np.mean(self.cold_final_temperature)))
 
         # Calculating the Work into the heat pump
         self.power_in = self.process_heat_requirement.to('kW')/self.actual_COP
@@ -377,7 +404,7 @@ class heat_pump:
             #print(i, 'gas', gas_CAGR_energy_costs, 'total', annual_gas_operating_cost)
 
         # Calculating and outputting (pint not working well with npf, so using some workarounds for now)
-        self.net_present_value = Q_(npf.npv(self.discount_rate, annual_cashflow), 'USD')
+        self.net_present_value = Q_(npf.npv(self.discount_rate.m, annual_cashflow), 'USD')
         if self.print_results: print('NPV: {:,~.2fP}'.format(self.net_present_value))
         self.internal_rate_of_return = Q_(npf.irr(unp.nominal_values(annual_cashflow)), 'dimensionless').to('pct')
         if self.print_results: print('IRR: {:~.3fP}'.format(self.internal_rate_of_return))

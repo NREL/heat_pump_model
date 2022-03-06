@@ -1,4 +1,59 @@
+hrs: 8760
+print_results: True
+write_output_file: True
 
-# Thermodynamic model inputs
+cold_temperature_available: {val: 50.0, unit: 'degC', unc: 1.0, hourly: True}
+cold_buffer: {val: 5.0, unit: 'delta_degC', hourly: True}
+cold_pressure: {val: 1.0, unit: 'atm', hourly: True}
+cold_mass_flowrate: {val: NaN, unit: 'kg/s'}
+cold_refrigerant: 'water'
 
-hot_temeprature_desired: 
+hot_temperature_desired: {val: 160.0, unit: 'degC', hourly: True}
+hot_buffer: {val: 5.0, unit: 'delta_degC', hourly: True}
+hot_pressure: {val: 1.0, unit: 'atm', hourly: True}
+hot_temperature_minimum: {val: 145.0, unit: 'degC', hourly: True}
+hot_mass_flowrate: {val: 99.0, unit: 'kg/s', hourly: True}
+hot_refrigerant: 'air'
+
+process_heat_requirement: {val: NaN, unit: 'kW'}
+
+second_law_efficiency: {val: 0.5, unit: 'dimensionless'}
+compressor_efficiency: {val: 0.7, unit: 'dimensionless'}
+
+second_law_efficiency_flag: True
+refrigerant_flag: False
+refrigerant: 'R1234ze(Z)'
+
+specific_capital_cost: {val: 590.0, unit: 'USD/kW'}
+fixed_o_and_m_per_size: {val: 11.8, unit: 'USD/kW'}
+variable_o_and_m: {val: 0.05, unit: 'USD/MMBtu'}
+lifetime: {val: 20.0, unit: 'yr'}
+discount_rate: {val: 10, unit: 'percent'}
+
+hourly_utility_rate: {val: 0.02, unit: 'USD / kW / hr', hourly: True}
+utility_rate: {val: 10.0, unit: 'USD / kW'}
+
+gas_capital_cost_per_size: {val: 90000, unit: 'USD / (MMBtu / hr)'}
+gas_fixed_o_and_m_per_size: {val: 50, unit: 'USD / ((MMBtu / hr) * year)'}
+gas_variable_o_and_m_per_mmbtu: {val: 0.01, unit: 'USD / MMBtu'}
+gas_price: {val: 3.5, unit: 'USD / MMBtu', hourly: True}
+gas_efficiency: {val: 0.8, unit: 'dimensionless'}
+gas_emissions_factor: {val: 120000, unit: 'lb / MMSCF'}
+gas_emissions_volume_per_energy: {val: 9.804e-4, unit: 'MMSCF/MMBtu'}
+gas_year_one_emissions: {val: 0.0, unit: 'ton / yr'}
+gas_CAGR: {val: 0.00, unit: 'dimensionless'}
+existing_gas: False
+carbon_price: {val: 0.0, unit: 'USD / ton'}
+
+kwh_CAGR: {val: 0.00, unit: 'dimensionless'}
+
+lat: 39.74077
+long: -105.16888
+schedule: 'industrial'
+
+t_crit_delta: {val: 30, unit: 'delta_degC'}
+min_p_crit: {val: 1.0e9, unit: 'Pa'}
+
+cold_dT_array: {val: 1.0, unit: 'delta_degC'}
+
+fuel_costs: {val: 0.0, unit: 'USD/hr', hourly: True}
