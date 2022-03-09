@@ -5,20 +5,14 @@ from utilities.unit_defs import Q_
 from uncertainties import ufloat as uf
 from timeit import default_timer as timer
 
-
 start = timer()
 hp_test = heat_pump()
-"""
-hp_test.hot_temperature_desired = Q_(np.array([90]*8760), 'degC')
-hp_test.hot_temperature_minimum = Q_(np.array([80]*8760), 'degC')
-# hp_test.process_heat_requirement = Q_(np.array([1]*8760), 'MW')
-hp_test.hot_mass_flowrate = Q_(np.array([uf(99,0.5)]*8760), 'kg/s')
-hp_test.cold_temperature_available = Q_(np.array([60]*8760), 'degC')
-hp_test.gas_price_MMBTU = Q_(np.array([4.5] * 8760), 'USD / MMBtu')
-hp_test.carnot_efficiency_factor = Q_('0.50')
-hp_test.carnot_efficiency_factor_flag = True
-"""
+
 hp_test.construct_yaml_input_quantities('model_inputs.yml')
+
+hp_test.make_input_quantity("hot_mass_flowrate: {val: 95.0, unit: 'kg/s', hourly: True}")
+hp_test.gas_price_MMBTU = Q_(np.array([4.5] * hp_test.n_hrs), 'USD / MMBtu')
+
 
 #hp_test.compressor_efficiency = 0.65
 print('')
