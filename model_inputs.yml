@@ -1,6 +1,12 @@
 # If csv data will be used, update n_hrs before running construct_yaml_input_quantities
 n_hrs: 8760
 
+##### Usage Notes #####
+
+# If a variable uses a dictionary, the dictionary must include a value (val) and a unit.
+# Optionally, an uncertainty (unc) can be included. Model runs much slower with
+# uncertainties included.
+
 ##### IO #####
 print_results: True
 write_output_file: True
