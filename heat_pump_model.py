@@ -1,5 +1,6 @@
 ##### Importing Libraries #####
 # Libraries below are used to pull from for the Heat Pump model
+from array import array
 import math
 import numpy as np
 import numpy_financial as npf
@@ -15,8 +16,8 @@ from CoolProp.Plots import SimpleCompressionCycle
 from libraries import *
 from refrigerant_properties import*
 from utilities.unit_defs import ureg, Q_
-from uncertainties import ufloat as uf
-from uncertainties import unumpy as unp
+# from uncertainties import ufloat as uf
+# from uncertainties import unumpy as unp
 
 ## Note: Default values set to -1.0 need to be calculated and are initialized, but will 
 ## return an error if not calculated first.
@@ -76,16 +77,8 @@ class heat_pump:
             try:
                 if not isinstance(var, dict):
                     continue
-                elif 'unc' in var:
-                    if 'hourly' in var and var['hourly'] is True:
-                        quant = Q_(np.array([uf(var['val'], var['unc'])]*input_dict['n_hrs']), var['unit'])
-                    else:
-                        quant = Q_(uf(var['val'], var['unc']), var['unit'])
                 else:
-                    if 'hourly' in var and var['hourly'] is True:
-                        quant = Q_(np.array([var['val']]*input_dict['n_hrs']), var['unit'])
-                    else:
-                        quant = Q_(var['val'], var['unit'])
+                    quant = Q_(var['val'], var['unit'])
                 input_dict[key] = quant
             except KeyError:
                 print('Something is wrong with input variable ' + key)
@@ -100,21 +93,21 @@ class heat_pump:
             try:
                 if not isinstance(var, dict):
                     continue
-                elif 'unc' in var:
-                    if 'hourly' in var and var['hourly'] is True:
-                        quant = Q_(np.array([uf(var['val'], var['unc'])]*self.n_hrs), var['unit'])
-                    else:
-                        quant = Q_(uf(var['val'], var['unc']), var['unit'])
                 else:
-                    if 'hourly' in var and var['hourly'] is True:
-                        quant = Q_(np.array([var['val']]*self.n_hrs), var['unit'])
-                    else:
-                        quant = Q_(var['val'], var['unit'])
+                    quant = Q_(var['val'], var['unit'])
                 input_dict[key] = quant
             except KeyError:
                 print('Something is wrong with input variable ' + key)
                 quit()
         self.__dict__.update(input_dict)
+
+    
+    def mysum(self, array_or_float):
+        if isinstance(array_or_float, array):
+            return np.sum(array_or_float)
+        else:
+            return self.n_hrs*array_or_float
+
 
     ## This subroutine within the heat pump class Initializes the heat pump to a process in the process library.
     ## This initialization is not essential as all values can be input individually, but this module is built to 
@@ -174,8 +167,8 @@ class heat_pump:
             #  4. Expansion valve outlet
             #  2-3 is the condenser where heat is expelled from the heat pump condenser to the heat sink or high temperature working fluid stream
             #  4-1 is the evaporator where heat is absorbed from the heat source or cold temperature working fluid to the heat pump evaporator
-            self.refrigerant_high_temperature = unp.nominal_values(self.hot_temperature_desired.to(ureg.degK)) + unp.nominal_values(self.hot_buffer.to(ureg.degK))
-            self.refrigerant_low_temperature = unp.nominal_values(self.cold_temperature_available.to(ureg.degK)) - unp.nominal_values(self.cold_buffer.to(ureg.degK))
+            self.refrigerant_high_temperature = self.hot_temperature_desired.to(ureg.degK) + self.hot_buffer.to(ureg.degK)
+            self.refrigerant_low_temperature = self.cold_temperature_available.to(ureg.degK) - self.cold_buffer.to(ureg.degK)
 
             try:
                 T_1 = np.array(self.refrigerant_low_temperature.m)
@@ -232,10 +225,10 @@ class heat_pump:
 
         # Calculating the Hot and Cold Mass Flow Parameters
         ## Hot
-        h_hi = Q_(PropsSI('H', 'T', unp.nominal_values(self.hot_temperature_minimum.to('degK').m), 'P', unp.nominal_values(self.hot_pressure.to('Pa').m), self.hot_refrigerant), 'J/kg')
-        h_ho = Q_(PropsSI('H', 'T', unp.nominal_values(self.hot_temperature_desired.to('degK').m), 'P', unp.nominal_values(self.hot_pressure.to('Pa').m), self.hot_refrigerant), 'J/kg')
+        h_hi = Q_(PropsSI('H', 'T', self.hot_temperature_minimum.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
+        h_ho = Q_(PropsSI('H', 'T', self.hot_temperature_desired.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
         try:
-            if (len(self.hot_mass_flowrate) == 0) and (len(self.process_heat_requirement) != 0):
+            if (self.hot_mass_flowrate == None) and (self.process_heat_requirement != None):
                 self.hot_mass_flowrate = (self.process_heat_requirement.to('W')/(h_ho - h_hi)).to('kg/s')
             else:
                 self.process_heat_requirement = (self.hot_mass_flowrate.to('kg/s')*(h_ho - h_hi)).to('kW')
@@ -246,9 +239,9 @@ class heat_pump:
         ## Cold
         cold_dT_array = self.cold_buffer - self.cold_deltaT
 
-        h_ci = Q_(PropsSI('H', 'T', unp.nominal_values(self.cold_temperature_available.to('degK').m), 'P', unp.nominal_values(self.cold_pressure.to('Pa').m), self.cold_refrigerant), 'J/kg')
+        h_ci = Q_(PropsSI('H', 'T', self.cold_temperature_available.to('degK').m, 'P', self.cold_pressure.to('Pa').m, self.cold_refrigerant), 'J/kg')
         self.cold_final_temperature = self.cold_temperature_available - cold_dT_array
-        h_co = Q_(PropsSI('H', 'T', unp.nominal_values(self.cold_final_temperature.to('degK').m), 'P', unp.nominal_values(self.cold_pressure.to('Pa').m), self.cold_refrigerant), 'J/kg')
+        h_co = Q_(PropsSI('H', 'T', self.cold_final_temperature.to('degK').m, 'P', self.cold_pressure.to('Pa').m, self.cold_refrigerant), 'J/kg')
         self.cold_mass_flowrate = self.process_heat_requirement.to('W')/(h_ci - h_co)
     
         # Getting average values for reporting
@@ -263,7 +256,7 @@ class heat_pump:
         #for i in range(0,8760):
         #    self.power_in[i] = self.process_heat_requirement_kw[i]/self.actual_COP
         self.average_power_in = np.mean(self.power_in)
-        self.annual_energy_in = sum(self.power_in*Q_('1 hour')).to('kWh')
+        self.annual_energy_in = self.mysum(self.power_in*Q_('1 hour')).to('kWh')
 
         if self.print_results: 
             print('Average Power Draw of Heat Pump: {:~.3fP}'.format(self.average_power_in))
@@ -276,14 +269,15 @@ class heat_pump:
         # Heat pump costs are estimated based on the maximum electrical power in.
         #self.capital_cost = self.specific_capital_cost * max(self.power_in)
         # Heat pump costs are estimated based on the maximum thermal power required in kW
-        self.capital_cost = self.specific_capital_cost * max(self.process_heat_requirement.to('kW'))
-        self.year_one_fixed_o_and_m = self.fixed_o_and_m_per_size*np.amax(self.process_heat_requirement.to('MMBtu/hr'))/Q_('1 yr')
+
+        self.capital_cost = self.specific_capital_cost * np.max(self.process_heat_requirement.to('kW'))
+        self.year_one_fixed_o_and_m = self.fixed_o_and_m_per_size*np.max(self.process_heat_requirement.to('MMBtu/hr'))/Q_('1 yr')
         self.year_one_fixed_o_and_m = self.year_one_fixed_o_and_m
-        self.year_one_variable_o_and_m = self.variable_o_and_m*np.sum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr')
+        self.year_one_variable_o_and_m = self.variable_o_and_m*self.mysum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr')
         self.year_one_variable_o_and_m = self.year_one_variable_o_and_m
 
         # Calculating the Capacity Factor
-        self.capacity_factor = np.sum(self.process_heat_requirement.to('kW'))/(self.n_hrs*np.max(self.process_heat_requirement.to('kW')))
+        self.capacity_factor = self.mysum(self.process_heat_requirement.to('kW'))/(self.n_hrs*np.max(self.process_heat_requirement.to('kW')))
 
         # Calculating the kWh costs
         kwh_costs = Q_(np.array([0.0]*self.n_hrs), 'USD')
@@ -295,8 +289,7 @@ class heat_pump:
         self.year_one_operating_costs = self.year_one_fixed_o_and_m + self.year_one_variable_o_and_m + self.year_one_energy_costs
         self.year_one_operating_costs = self.year_one_operating_costs
 
-        self.LCOH = (self.capital_cost + self.lifetime*self.year_one_operating_costs)/(self.lifetime*sum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr'))
-        self.LCOH = self.LCOH
+        self.LCOH = (self.capital_cost + self.lifetime*self.year_one_operating_costs)/(self.lifetime*self.mysum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr'))
 
         if self.print_results: 
             print('Capital Cost: {:,~.2fP}'.format(self.capital_cost))
@@ -317,24 +310,25 @@ class heat_pump:
             self.gas_capital_cost = self.gas_capital_cost
         self.gas_year_one_fixed_o_and_m = self.gas_fixed_o_and_m_per_size*np.max(self.process_heat_requirement.to('MMBtu/hr'))
         self.gas_year_one_fixed_o_and_m = self.gas_year_one_fixed_o_and_m
-        self.gas_year_one_variable_o_and_m = self.gas_variable_o_and_m_per_mmbtu*np.sum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/(Q_('1 yr')*self.gas_efficiency)
+        self.gas_year_one_variable_o_and_m = self.gas_variable_o_and_m_per_mmbtu*self.mysum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/(Q_('1 yr')*self.gas_efficiency)
         self.gas_year_one_variable_o_and_m = self.gas_year_one_variable_o_and_m
 
         # Calculating Emissions
         # 1020 from 1 MMSCF/1020 MMBTU
         # 2000 from 1 ton/2000 lb
         # Calculated using EPA estimate: https://www.epa.gov/sites/production/files/2016-09/boilers_and_emergency_engines_pte_calculator_version_1.0.xlsx 
-        
-        self.gas_year_one_emissions = (sum(self.process_heat_requirement.to('MMBtu/yr'))/self.gas_efficiency) * self.gas_emissions_factor.to('ton / MMSCF')*self.gas_emissions_volume_per_energy
+
+        self.gas_year_one_emissions = (self.mysum(self.process_heat_requirement.to('MMBtu/yr'))/self.gas_efficiency) * self.gas_emissions_factor.to('ton / MMSCF')*self.gas_emissions_volume_per_energy
         self.gas_year_one_cost_of_emissions =   (self.carbon_price * self.gas_year_one_emissions)
 
         # fuel_costs = Q_(np.array([0.0]*self.n_hrs), 'USD/hr')
         fuel_costs = self.gas_price*self.process_heat_requirement.to('MMBtu/hr')
-        self.gas_year_one_energy_costs = (np.sum(fuel_costs*Q_('1 hr')))/Q_('1 yr')
+        self.gas_year_one_energy_costs = (self.mysum(fuel_costs*Q_('1 hr')))/Q_('1 yr')
         self.gas_year_one_operating_costs = self.gas_year_one_fixed_o_and_m + self.gas_year_one_variable_o_and_m + self.gas_year_one_energy_costs + self.gas_year_one_cost_of_emissions 
         self.gas_year_one_operating_costs = self.gas_year_one_operating_costs
 
-        self.gas_LCOH = (self.gas_capital_cost+ self.lifetime*self.gas_year_one_operating_costs)/(self.lifetime*sum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr'))
+        self.gas_LCOH = (self.gas_capital_cost+ self.lifetime*self.gas_year_one_operating_costs)/(self.lifetime*self.mysum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr'))
+
         self.gas_LCOH = self.gas_LCOH.to('USD/MMBtu')
 
         if self.print_results: 
@@ -369,7 +363,7 @@ class heat_pump:
         # Calculating and outputting (pint not working well with npf, so using some workarounds for now)
         self.net_present_value = Q_(npf.npv(self.discount_rate.m, annual_cashflow), 'USD')
         if self.print_results: print('NPV: {:,~.2fP}'.format(self.net_present_value))
-        self.internal_rate_of_return = Q_(npf.irr(unp.nominal_values(annual_cashflow)), 'dimensionless').to('pct')
+        self.internal_rate_of_return = Q_(npf.irr(annual_cashflow), 'dimensionless').to('pct')
         if self.print_results: print('IRR: {:~.3fP}'.format(self.internal_rate_of_return))
         # Need to calcuate year 1 energy Savings
         try:

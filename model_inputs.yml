@@ -1,11 +1,10 @@
-# If csv data will be used, update n_hrs before running construct_yaml_input_quantities
+# If csv data will be used, update n_hrs after running construct_yaml_input_quantities
 n_hrs: 8760
 
 ##### Usage Notes #####
 
 # If a variable uses a dictionary, the dictionary must include a value (val) and a unit.
-# Optionally, an uncertainty (unc) can be included. Model runs much slower with
-# uncertainties included.
+# If an input array (hourly data) will be used, load this file, then write over the inputs here with desired array.
 
 ##### IO #####
 print_results: True
@@ -13,8 +12,8 @@ write_output_file: True
 
 ##### 1.COP #####
 ## Inputs
-cold_temperature_available: {val: 50.0, unit: 'degC', unc: 1.0, hourly: True}
-hot_temperature_desired: {val: 160.0, unit: 'degC', hourly: True}
+cold_temperature_available: {val: 50.0, unit: 'degC'}
+hot_temperature_desired: {val: 160.0, unit: 'degC'}
 
 second_law_efficiency: {val: 0.5, unit: 'dimensionless'}
 # If the refrigerant selection process fails, the flag is changed to true so that it can be automatically analyzed post processing
@@ -24,8 +23,8 @@ t_crit_delta: {val: 30, unit: 'delta_degC'}
 min_p_crit: {val: 1.0e9, unit: 'Pa'}
 
 # The hot and cold buffer are the temperature difference between the working fluid and the hot and cold streams, a measure of the heat exchanger efficiency
-cold_buffer: {val: 5.0, unit: 'delta_degC', hourly: True}
-hot_buffer: {val: 5.0, unit: 'delta_degC', hourly: True}
+cold_buffer: {val: 5.0, unit: 'delta_degC'}
+hot_buffer: {val: 5.0, unit: 'delta_degC'}
 
 compressor_efficiency: {val: 0.7, unit: 'dimensionless'}
 
@@ -34,14 +33,14 @@ refrigerant_flag: False
 
 ##### 2.Energy and Mass Flow #####
 ## Inputs
-cold_pressure: {val: 1.0, unit: 'atm', hourly: True}
+cold_pressure: {val: 1.0, unit: 'atm'}
 cold_mass_flowrate: {val: NaN, unit: 'kg/s'}
 cold_refrigerant: 'water'
 cold_deltaT: {val: 1.0, unit: 'delta_degC'}
 
-hot_pressure: {val: 1.0, unit: 'atm', hourly: True}
-hot_temperature_minimum: {val: 145.0, unit: 'degC', hourly: True}
-hot_mass_flowrate: {val: 99.0, unit: 'kg/s', hourly: True}
+hot_pressure: {val: 1.0, unit: 'atm'}
+hot_temperature_minimum: {val: 145.0, unit: 'degC'}
+hot_mass_flowrate: {val: 99.0, unit: 'kg/s'}
 hot_refrigerant: 'air'
 
 process_heat_requirement: {val: NaN, unit: 'kW'}
@@ -58,7 +57,7 @@ variable_o_and_m: {val: 0.05, unit: 'USD/MMBtu'}
 lifetime: {val: 20.0, unit: 'yr'}
 discount_rate: {val: 10, unit: 'percent'}
 
-hourly_utility_rate: {val: 0.02, unit: 'USD / kW / hr', hourly: True}
+hourly_utility_rate: {val: 0.02, unit: 'USD / kW / hr'}
 utility_rate: {val: 10.0, unit: 'USD / kW'}
 
 ##### 4. Natural Gas Costs #####
@@ -66,7 +65,7 @@ utility_rate: {val: 10.0, unit: 'USD / kW'}
 specific_gas_capital_cost: {val: 90000, unit: 'USD / (MMBtu / hr)'}
 gas_fixed_o_and_m_per_size: {val: 50, unit: 'USD / ((MMBtu / hr) * year)'}
 gas_variable_o_and_m_per_mmbtu: {val: 0.01, unit: 'USD / MMBtu'}
-gas_price: {val: 3.5, unit: 'USD / MMBtu', hourly: True}
+gas_price: {val: 3.5, unit: 'USD / MMBtu'}
 gas_efficiency: {val: 0.8, unit: 'dimensionless'}
 gas_emissions_factor: {val: 120000, unit: 'lb / MMSCF'}
 gas_emissions_volume_per_energy: {val: 9.804e-4, unit: 'MMSCF/MMBtu'}
