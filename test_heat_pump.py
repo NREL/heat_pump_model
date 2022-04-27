@@ -2,7 +2,6 @@ from heat_pump_model import heat_pump
 from libraries import * 
 import numpy as np
 from utilities.unit_defs import Q_
-from uncertainties import ufloat as uf
 from timeit import default_timer as timer
 
 start = timer()
@@ -53,4 +52,6 @@ print('')
 #print(working_fluid['air'])
 end = timer()
 print(end - start)
+
+print(hp_test.mysum(hp_test.gas_price_MMBTU))
 print('Done')

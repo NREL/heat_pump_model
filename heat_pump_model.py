@@ -65,6 +65,8 @@ class heat_pump:
         self.internal_rate_of_return = Q_('-1.0')
         self.payback_period = Q_('100.0 yr')
 
+        self.n_hrs = 8760
+
         self.construct_yaml_input_quantities('model_inputs.yml')
 
     
@@ -103,7 +105,7 @@ class heat_pump:
 
     
     def mysum(self, array_or_float):
-        if isinstance(array_or_float, array):
+        if len(array_or_float.magnitude) > 1.0:
             return np.sum(array_or_float)
         else:
             return self.n_hrs*array_or_float
