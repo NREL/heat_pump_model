@@ -105,9 +105,12 @@ class heat_pump:
 
     
     def mysum(self, array_or_float):
-        if len(array_or_float.magnitude) > 1.0:
-            return np.sum(array_or_float)
-        else:
+        try:
+            if len(array_or_float.magnitude) > 1.0:
+                return np.sum(array_or_float)
+            else:
+                return self.n_hrs*array_or_float
+        except(TypeError):
             return self.n_hrs*array_or_float
 
 

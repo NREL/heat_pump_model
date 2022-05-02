@@ -52,6 +52,5 @@ print('')
 #print(working_fluid['air'])
 end = timer()
 print(end - start)
-
-print(hp_test.mysum(hp_test.gas_price_MMBTU))
 print('Done')
+
