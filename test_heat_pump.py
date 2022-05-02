@@ -6,12 +6,12 @@ from timeit import default_timer as timer
 
 start = timer()
 hp_test = heat_pump()
-hp_test.hot_temperature_desired = Q_(np.array([90]*8760), 'degC')
-hp_test.hot_temperature_minimum = Q_(np.array([80]*8760), 'degC')
-hp_test.cold_temperature_available = Q_(np.array([60]*8760), 'degC')
-hp_test.gas_price_MMBTU = Q_(np.array([4.5] * 8760), 'USD / MMBtu')
-hp_test.carnot_efficiency_factor = Q_('0.50')
-hp_test.carnot_efficiency_factor_flag = True
+
+hp_test.construct_yaml_input_quantities('model_inputs.yml')
+
+hp_test.make_input_quantity("hot_mass_flowrate: {val: 95.0, unit: 'kg/s'}")
+hp_test.gas_price_MMBTU = Q_(np.array([4.5] * hp_test.n_hrs), 'USD / MMBtu')
+
 
 #hp_test.compressor_efficiency = 0.65
 print('')
@@ -32,7 +32,7 @@ hp_test.run_all('Case_3')
 #hp_test.carnot_efficiency_factor = 0.4
 #hp_test.calculate_COP()
 #print(hp_test.actual_COP)
-'''
+
 print('')
 hp_test.calculate_COP()
 print('')
@@ -43,7 +43,7 @@ print('')
 hp_test.calculate_natural_gas_comparison()
 print('')
 hp_test.write_output('test')
-print('')'''
+print('')
 
 #hp_test.run_all('test')
 #hp_test.carbon_price_per_ton = 20
@@ -53,3 +53,4 @@ print('')'''
 end = timer()
 print(end - start)
 print('Done')
+
