@@ -1,6 +1,8 @@
 ##### Importing Libraries #####
 # Libraries below are used to pull from for the Heat Pump model
 from array import array
+from cmath import nan
+from configparser import SectionProxy
 import math
 import numpy as np
 import numpy_financial as npf
@@ -12,6 +14,10 @@ import yaml
 from CoolProp.CoolProp import PropsSI 
 from CoolProp.Plots import PropertyPlot
 from CoolProp.Plots import SimpleCompressionCycle
+import requests
+import json
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from libraries import *
 from refrigerant_properties import*
@@ -233,10 +239,10 @@ class heat_pump:
         h_hi = Q_(PropsSI('H', 'T', self.hot_temperature_minimum.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
         h_ho = Q_(PropsSI('H', 'T', self.hot_temperature_desired.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
         try:
-            if (self.hot_mass_flowrate == None) and (self.process_heat_requirement != None):
-                self.hot_mass_flowrate = (self.process_heat_requirement.to('W')/(h_ho - h_hi)).to('kg/s')
-            else:
+            if str(self.hot_mass_flowrate.magnitude).isnumeric():
                 self.process_heat_requirement = (self.hot_mass_flowrate.to('kg/s')*(h_ho - h_hi)).to('kW')
+            else:
+                self.hot_mass_flowrate = (self.process_heat_requirement.to('W')/(h_ho - h_hi)).to('kg/s')
         except:
             print('Provide either .hot_mass_flowrate or .process_heat_requirement.')
             quit()
@@ -267,6 +273,46 @@ class heat_pump:
             print('Average Power Draw of Heat Pump: {:~.3fP}'.format(self.average_power_in))
             print('Maximum Power Draw of Heat Pump: {:~.3fP}'.format(np.amax(self.power_in)))
             print('Annual Electricity in: {:,~.1fP}'.format(self.annual_energy_in))
+
+    def find_electric_utility_rates(self, start_date='2022-01-01', city='Phoenix, AZ', sector='Commercial'):
+        df_days = pd.DataFrame(pd.date_range(start_date, periods=self.n_hrs, freq="H"), columns=['Datetime'])
+        df_days['Date'] = pd.to_datetime(df_days['Datetime']).dt.date
+        df_days['Month'] = pd.to_datetime(df_days['Datetime']).dt.month
+        df_days['Hour'] = pd.to_datetime(df_days['Datetime']).dt.hour
+        df_days['is_wkday'] = [np.is_busday(x) for x in df_days['Date'].astype(str)]
+
+        "Uses US Utility Rate Data Base (URDB) to obtain hourly rates"
+        OpenEI_API_Key = "bgWfH1EGBx3nZKrj6cgm6wN6zcR2wAzD83Qh4VN3"
+        version = "latest"
+        formt = "json"
+        limit = 500
+        approved = "true"
+        offset = 0
+        address = city
+        sector = sector
+        detail = "full"
+        url = f"https://api.openei.org/utility_rates?version={version}&format={formt}&limit={limit}&api_key={OpenEI_API_Key}&detail={detail}&address={address}"
+
+        resp = requests.get(url=url, verify=False)
+        resp_dict = json.loads(resp.text)
+        resp_list = resp_dict["items"]
+
+        wkday_sch = resp_list[0]["energyweekdayschedule"]
+        wkend_sch = resp_list[0]["energyweekendschedule"]
+
+        rate_structure = resp_list[0]["energyratestructure"]
+        self.hourly_utility_rate = Q_([0]*self.n_hrs, 'USD/kW/hr')
+        rate_mags = [0]*self.n_hrs
+        # Convert month-hour rate schedule to hourly array for year in $/kW-h
+        for i in range(self.n_hrs):
+            month_i = df_days['Month'][i] - 1
+            hour_i = df_days['Hour'][i]
+            if df_days["is_wkday"][i]:
+                rate_mags[i] = rate_structure[wkday_sch[month_i][hour_i]][0]['rate']
+            else:
+                rate_mags[i] = rate_structure[wkend_sch[month_i][hour_i]][0]['rate']
+            
+            self.hourly_utility_rate = Q_(rate_mags, 'USD/kW/hr')
 
     ## Calculating Heat Pump Costs
     def calculate_heat_pump_costs(self):
