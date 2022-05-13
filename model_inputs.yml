@@ -1,4 +1,4 @@
-# If csv data will be used, update n_hrs after running construct_yaml_input_quantities
+# If hourly data will be used, update n_hrs after running construct_yaml_input_quantities
 n_hrs: 8760
 
 ##### Usage Notes #####
@@ -40,7 +40,7 @@ cold_deltaT: {val: 1.0, unit: 'delta_degC'}
 
 hot_pressure: {val: 1.0, unit: 'atm'}
 hot_temperature_minimum: {val: 145.0, unit: 'degC'}
-hot_mass_flowrate: {val: 99.0, unit: 'kg/s'}
+hot_mass_flowrate: {val: 99, unit: 'kg/s'}
 hot_refrigerant: 'air'
 
 process_heat_requirement: {val: NaN, unit: 'kW'}

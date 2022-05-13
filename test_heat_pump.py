@@ -11,7 +11,7 @@ hp_test.construct_yaml_input_quantities('model_inputs.yml')
 
 # hp_test.make_input_quantity("hot_mass_flowrate: {val: 95.0, unit: 'kg/s'}")
 hp_test.gas_price_MMBTU = Q_(np.array([4.5] * hp_test.n_hrs), 'USD / MMBtu')
-hp_test.find_electric_utility_rates(city='San Francisco, CA', sector='Commercial')
+# hp_test.find_electric_utility_rates(city='San Francisco, CA', sector='Commercial')
 
 
 #hp_test.compressor_efficiency = 0.65
