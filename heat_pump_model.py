@@ -69,7 +69,7 @@ class heat_pump:
 
         self.construct_yaml_input_quantities('model_inputs.yml')
 
-    
+
     def construct_yaml_input_quantities(self, file_path):
         with open(file_path, "r") as file_desc:
             input_dict = yaml.safe_load(file_desc)
@@ -180,22 +180,40 @@ class heat_pump:
                 T_3 = np.array(self.refrigerant_high_temperature.m)
 
                 # Calculating Cycle Parameters
+
+                # Point 1: evaporator outlet, compressor inlet: saturated vapor @ evaporator temperature - dT
                 P_1 = PropsSI('P', 'T', T_1, 'Q', 1, self.refrigerant)
                 S_1 = PropsSI('S', 'T', T_1, 'Q', 1, self.refrigerant)
                 H_1 = PropsSI('H', 'T', T_1, 'Q', 1, self.refrigerant)
 
+                # Point 3: condenser outlet, valve inlet: saturated liquid @ condenser temperature + dT
                 P_3 = PropsSI('P', 'T', T_3, 'Q', 0, self.refrigerant)
                 S_3 = PropsSI('S', 'T', T_3, 'Q', 0, self.refrigerant)
                 H_3 = PropsSI('H', 'T', T_3, 'Q', 0, self.refrigerant)
 
-                T_2 = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
-                H_2 = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
-
+                # Point 2: compressor outlet, condenser inlet: same pressure as 3, isentropic compression from 1
                 P_2 = P_3
-                H_2_prime = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)
-                H_2 = H_1 + (H_2_prime - H_1)/(self.compressor_efficiency.m) # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
+                T_2_ise = PropsSI('T', 'S', S_1, 'P', P_3, self.refrigerant)
+                H_2_ise = PropsSI('H', 'S', S_1, 'P', P_3, self.refrigerant)  # isentropic enthalpy
+                H_2 = H_1 + (H_2_ise - H_1)/(self.compressor_efficiency.m)  # non-isentropic enthalpy  # Remark, it should be tested if the state 2 (H_2, P_2) is in the 2-phase region or not
                 T_2 = PropsSI('T', 'H', H_2, 'P', P_2, self.refrigerant)
-                self.actual_COP = (np.divide((H_2 - H_3), (H_2 - H_1)))*ureg.dimensionless
+                
+                # Point 4: valve outlet, evaporator inlet: isenthalpic expansion from 3, same temperature and pressure as 1
+                H_4 = H_3 # isenthalpic expansion
+                T_4 = T_1
+                P_4 = P_1
+                Q_4 = PropsSI('Q', 'P', P4, 'H', H4, fluid1)
+
+                # COP calculation for individual cycle
+                self.work_permass = (H_2 - H_1)
+                self.heat_rejected_permass = (H_2 - H_3)
+                self.actual_COP = (np.divide(self.heat_rejected_permass, self.work_permass))*ureg.dimensionless
+
+                # storing enthalpies for cascade calculations
+                self.H_1 = H_1
+                self.H_2 = H_2
+                self.H_3 = H_3
+                self.H_4 = H_4
 
                 # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
                 # The VR is taken from experimental values which we do not fully have, so will integrate as part of year 2
@@ -437,3 +455,92 @@ class heat_pump:
         self.calculate_cash_flow()
         if self.write_output_file: self.write_output(filename)
 
+
+
+''' Cascade Configuration '''
+
+# see this link for creating a class instance inside of the class definition (might be better to include the cascade inside of the HP model)
+# https://stackoverflow.com/questions/18360891/how-does-creating-a-instance-of-class-inside-of-the-class-itself-works#:~:text=There%20is%20absolutely%20no%20problem,when%20it%20is%20being%20run.
+
+# function for cascade cycle
+class cascade_heat_pump(heat_pump):
+
+    def __init__(self):
+
+        # number of stages:
+        self.n_stages = 3
+
+        # delta T between the two fluids (both with constant temperature) on each side of the  heat exchangers
+        self.cascade_HE_dT = Q_(5, 'degK')
+        # delta T between the 
+        hp.hot_buffer = Q_(5, 'degK')
+        hp.cold_buffer = Q_(5, 'degK')
+
+        # specified refrigerants: initialize with the same refrigerant in all cycles
+        self.refrigerant_list = ['ammonia']*n_stages
+        
+    def calculate_COP(self):
+
+        # calculate intermediate temperature levels based on the number of cycles:
+        T_levels_center = np.linspace(self.cold_temperature_available - 5, self.hot_temperature_desired + 5, n_cycles + 1)
+        # initialize temperature levels, rows represent different stages, columns represent evaporator and condenser temperatures
+        T_levels = np.zeros( (self.n_stages, 2) )
+        for i in range(self.n_stages):
+            # first stage, evaporator dT already accounted for
+            if i == 0:
+                # evaporator temperature
+                T_levels[i][0] = T_levels_center[i] 
+                # condenser temperature
+                T_levels[i][1] = T_levels_center[i+1] + self.cascade_HE_dT/2
+            # last stage, condenser dT already accounted for
+            elif i == self.n_stages - 1:
+                # evaporator temperature
+                T_levels[i][0] = T_levels_center[i] - self.cascade_HE_dT/2
+                # condenser temperature
+                T_levels[i][1] = T_levels_center[i+1] 
+            # remaining stages
+            else: 
+                # evaporator temperature
+                T_levels[i][0] = T_levels_center[i] - self.cascade_HE_dT/2
+                # condenser temperature
+                T_levels[i][1] = T_levels_center[i+1] + self.cascade_HE_dT/2
+
+        # run HP model for each stage
+        H_matrix = np.zeros( (self.n_stages, 4) )  # enthalpies at points 1:4 for each stage
+        for i in range(self.n_stages):
+            # generate HP model
+            hp = heat_pump()
+            hp.refrigerant_flag = True
+            hp.carnot_efficiency_factor_flag = False  # redundant?
+            hp.refrigerant = self.refrigerant_list[i]
+            hp.cold_temperature_available = T_levels[i][0]
+            hp.hot_temperature_desired = T_levels[i][1]
+            hp.hot_buffer = 0
+            hp.cold_buffer = 0
+
+            # run HP, calculate enthalpies
+            hp.calculate_COP() 
+            H_matrix[i][0] = hp.H_1
+            H_matrix[i][1] = hp.H_2
+            H_matrix[i][2] = hp.H_3
+            H_matrix[i][3] = hp.H_4
+
+        '''calculate overall COP'''
+
+        # heat rejection from the uppermost stage
+        Q_rej_permass = H_matrix[-1][1] - H_matrix[-1][2]
+
+        # calculate flow ratios between adjacent stages (top stage mass flowrate over bottom stage mass flow rate, calculated from a heat balance)
+        flow_ratio = np.zeros(self.n_stages-1)
+        for i in range(self.n_stages)-1:
+            flow_ratio[i] = (H_matrix[i+1][0] - H_matrix[i+1][3]) / (H_matrix[i][1] - H_matrix[i][2])
+
+        # calculate denominator of COP: product of work_permass and product of flow ratios starting from the stage and going upwards 
+        # example for 3 stages: COP = Qrej / (W1*(m1/m2)*(m2/m3) + W2*(m2/m3) + W3)
+        denominator = 0
+        for i in range(self.n_stages):
+            work_i_permass = H_matrix[i][1] - H_matrix[i][0]
+            denominator += work_i_permass * np.prod(flow_ratio[i:])
+
+        self.COP = Q_rej_permass / denominator
+        
