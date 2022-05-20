@@ -7,9 +7,12 @@ from timeit import default_timer as timer
 start = timer()
 hp_test = heat_pump()
 
-hp_test.construct_yaml_input_quantities('model_inputs.yml')
+rho_beer = Q_('1000 kg/m^3')
+V_dot_beer = Q_('200 BBLs')
 
-hp_test.make_input_quantity("hot_mass_flowrate: {val: 95.0, unit: 'kg/s'}")
+hp_test.construct_yaml_input_quantities('model_inputs.yml')
+hp_test.hot_mass_flowrate = rho_beer*V_dot_beer
+# hp_test.make_input_quantity("hot_mass_flowrate: {val: 95.0, unit: 'kg/s'}")
 hp_test.gas_price_MMBTU = Q_(np.array([4.5] * hp_test.n_hrs), 'USD / MMBtu')
 
 
