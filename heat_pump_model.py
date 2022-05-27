@@ -274,43 +274,30 @@ class heat_pump:
             print('Maximum Power Draw of Heat Pump: {:~.3fP}'.format(np.amax(self.power_in)))
             print('Annual Electricity in: {:,~.1fP}'.format(self.annual_energy_in))
 
-    def find_electric_utility_rates(self, start_date='2022-01-01', city='Phoenix, AZ', sector='Commercial'):
+    def run_all_commercial_electric_utility_rates(self, start_date='2022-01-01'):
         df_days = pd.DataFrame(pd.date_range(start_date, periods=self.n_hrs, freq="H"), columns=['Datetime'])
         df_days['Date'] = pd.to_datetime(df_days['Datetime']).dt.date
         df_days['Month'] = pd.to_datetime(df_days['Datetime']).dt.month
         df_days['Hour'] = pd.to_datetime(df_days['Datetime']).dt.hour
         df_days['is_wkday'] = [np.is_busday(x) for x in df_days['Date'].astype(str)]
 
-        "Uses US Utility Rate Data Base (URDB) to obtain hourly rates"
-        OpenEI_API_Key = "bgWfH1EGBx3nZKrj6cgm6wN6zcR2wAzD83Qh4VN3"
-        version = "latest"
-        formt = "json"
-        limit = 500
-        approved = "true"
-        offset = 0
-        address = city
-        sector = sector
-        detail = "full"
-        url = f"https://api.openei.org/utility_rates?version={version}&format={formt}&limit={limit}&api_key={OpenEI_API_Key}&detail={detail}&address={address}"
+        df_urdb_commercial = pd.read_csv('utilities/usurdb_commercial_dataframe.csv')
 
-        resp = requests.get(url=url, verify=False)
-        resp_dict = json.loads(resp.text)
-        resp_list = resp_dict["items"]
+        wkday_sch = json.loads(df_urdb_commercial["rate_wkday_sch"].values.tolist()[0])
+        wkend_sch = json.loads(df_urdb_commercial["rate_wkend_sch"].values.tolist()[0])
 
-        wkday_sch = resp_list[0]["energyweekdayschedule"]
-        wkend_sch = resp_list[0]["energyweekendschedule"]
-
-        rate_structure = resp_list[0]["energyratestructure"]
+        rate_structure = json.loads(df_urdb_commercial["rate_structure"].values.tolist()[0])
         self.hourly_utility_rate = Q_([0]*self.n_hrs, 'USD/kW/hr')
         rate_mags = [0]*self.n_hrs
         # Convert month-hour rate schedule to hourly array for year in $/kW-h
         for i in range(self.n_hrs):
-            month_i = df_days['Month'][i] - 1
-            hour_i = df_days['Hour'][i]
+            month_i = int(df_days['Month'][i] - 1)
+            hour_i = int(df_days['Hour'][i])
+            # print(wkday_sch[month_i][hour_i])
             if df_days["is_wkday"][i]:
-                rate_mags[i] = rate_structure[wkday_sch[month_i][hour_i]][0]['rate']
+                rate_mags[i] = rate_structure[wkday_sch[month_i][hour_i]]
             else:
-                rate_mags[i] = rate_structure[wkend_sch[month_i][hour_i]][0]['rate']
+                rate_mags[i] = rate_structure[wkend_sch[month_i][hour_i]]
             
             self.hourly_utility_rate = Q_(rate_mags, 'USD/kW/hr')
 

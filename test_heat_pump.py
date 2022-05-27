@@ -1,6 +1,7 @@
 from heat_pump_model import heat_pump
 from libraries import * 
 import numpy as np
+import pandas as pd
 from utilities.unit_defs import Q_
 from timeit import default_timer as timer
 
@@ -9,9 +10,12 @@ hp_test = heat_pump()
 
 hp_test.construct_yaml_input_quantities('model_inputs.yml')
 
-# hp_test.make_input_quantity("hot_mass_flowrate: {val: 95.0, unit: 'kg/s'}")
-hp_test.gas_price_MMBTU = Q_(np.array([4.5] * hp_test.n_hrs), 'USD / MMBtu')
-# hp_test.find_electric_utility_rates(city='San Francisco, CA', sector='Commercial')
+df = pd.DataFrame(np.array([4.5]*hp_test.n_hrs))
+
+#hp_test.make_input_quantity("hot_mass_flowrate: {val: 95.0, unit: 'kg/s'}")
+#hp_test.gas_price_MMBTU = Q_(np.array([4.5] * hp_test.n_hrs), 'USD / MMBtu')
+hp_test.gas_price_MMBTU = Q_(df, 'USD / MMBtu')
+hp_test.run_all_commercial_electric_utility_rates()
 
 
 #hp_test.compressor_efficiency = 0.65
@@ -54,3 +58,5 @@ print(working_fluid['air'])
 end = timer()
 print(end - start)
 print('Done')
+
+print(hp_test.hourly_utility_rate)
