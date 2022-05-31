@@ -9,6 +9,8 @@ import requests
 import csv
 import CoolProp
 import yaml
+import sys
+
 from CoolProp.CoolProp import PropsSI 
 from CoolProp.Plots import PropertyPlot
 from CoolProp.Plots import SimpleCompressionCycle
@@ -214,6 +216,7 @@ class heat_pump:
                 self.H_2 = H_2
                 self.H_3 = H_3
                 self.H_4 = H_4
+                print('enthalpies calculated')
 
                 # There is an efficiency associated with the pressure ratio and an efficiency association with the volume ratio
                 # The VR is taken from experimental values which we do not fully have, so will integrate as part of year 2
@@ -225,9 +228,9 @@ class heat_pump:
                 # self.compressor_efficiency[i] = round(eta_vr*eta_pr, 3)
                 # self.actual_COP = self.ideal_COP * self.compressor_efficiency
 
-            except:
-                print('There was an error calling refrigerant properties. Please check inputs and try again.')
-                quit()
+            except Exception as e:
+                print(e)
+                sys.exit()
 
         if self.print_results: print('Calculate COP Called')
         if self.print_results: print('Average Theoretical COP: ', np.mean(self.ideal_COP))
