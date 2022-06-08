@@ -233,7 +233,8 @@ class heat_pump:
         h_hi = Q_(PropsSI('H', 'T', self.hot_temperature_minimum.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
         h_ho = Q_(PropsSI('H', 'T', self.hot_temperature_desired.to('degK').m, 'P', self.hot_pressure.to('Pa').m, self.hot_refrigerant), 'J/kg')
         try:
-            if (self.hot_mass_flowrate == None) and (self.process_heat_requirement != None):
+            #if (self.hot_mass_flowrate == None) and (self.process_heat_requirement != None):
+            if (self.hot_mass_flowrate == None):
                 self.hot_mass_flowrate = (self.process_heat_requirement.to('W')/(h_ho - h_hi)).to('kg/s')
             else:
                 self.process_heat_requirement = (self.hot_mass_flowrate.to('kg/s')*(h_ho - h_hi)).to('kW')
