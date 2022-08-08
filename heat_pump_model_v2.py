@@ -52,7 +52,7 @@ class heat_pump:
 
         self.n_hrs = 8760
 
-        self.construct_yaml_input_quantities('model_inputs.yml')
+        self.construct_yaml_input_quantities('heatpump_model_inputs.yml')
 
     
     def construct_yaml_input_quantities(self, file_path):
@@ -310,32 +310,17 @@ class heat_pump:
             ['Utility Rate Average', '{:,~.2fP}'.format(np.mean(self.hourly_utility_rate))],
             ['Capacity Factor', '{:~.3fP}'.format(np.mean(self.capacity_factor))],
             ['Project Lifetime', '{:~.2fP}'.format(self.lifetime)],
-            ['HP Power in Average', '{:~.2fP}'.format(self.average_power_in)],
-            ['HP Annual Energy In', '{:~.2fP}'.format(self.annual_energy_in)],
-            ['HP Capital Cost Per Unit', '{:,~.2fP}'.format(self.specific_capital_cost)],
-            ['HP Fixed O&M Costs', '{:,~.2fP}'.format(self.fixed_o_and_m_per_size)],
-            ['HP Variable O&M Costs', '{:,~.2fP}'.format(self.variable_o_and_m)],
-            ['HP Capital Cost', '{:,~.2fP}'.format(self.capital_cost)],
-            ['HP Year One Energy Costs', '{:,~.2fP}'.format(self.year_one_energy_costs)],
-            ['HP Year One Fixed O&M Costs', '{:,~.2fP}'.format(self.year_one_fixed_o_and_m)],
-            ['HP Year One Variable O&M Costs', '{:,~.2fP}'.format(self.year_one_variable_o_and_m)],
-            ['HP Year One Total Operating Costs', '{:,~.2fP}'.format(self.year_one_operating_costs)],
-            ['HP LCOH', '{:,~.2fP}'.format(self.LCOH)],
-            ['Gas Capital Cost Per Unit', '{:,~.2fP}'.format(self.specific_gas_capital_cost)],
-            ['Gas Fixed O&M Costs', '{:,~.2fP}'.format(self.gas_fixed_o_and_m_per_size)],
-            ['Gas Variable O&M Costs', '{:,~.2fP}'.format(self.gas_variable_o_and_m_per_mmbtu)],
-            ['Gas Average Price', '{:,~.2fP}'.format(np.mean(self.gas_price))],
-            ['Gas Capital Cost', '{:,~.2fP}'.format(self.gas_capital_cost)],
-            ['Gas Year One Energy Costs', '{:,~.2fP}'.format(self.gas_year_one_energy_costs)],
-            ['Gas Year One Fixed O&M Costs', '{:,~.2fP}'.format(self.gas_year_one_fixed_o_and_m)],
-            ['Gas Year One Variable O&M Costs', '{:,~.2fP}'.format(self.gas_year_one_variable_o_and_m)],
-            ['Gas Year One Total Operating Costs', '{:,~.2fP}'.format(self.gas_year_one_operating_costs)],
-            ['Gas LCOH', '{:,~.2fP}'.format(self.gas_LCOH)],
-            ['Gas Emissions', '{:~.2fP}'.format(self.gas_year_one_emissions)],
-            ['Gas Social Cost of Emissions', '{:,~.2fP}'.format(self.gas_year_one_cost_of_emissions)],
-            ['Net Present Value', '{:,~.2fP}'.format(self.net_present_value)],
-            ['Internal Rate of Return pct', '{:~.3fP}'.format(self.internal_rate_of_return)],
-            ['Payback Period', '{:~P}'.format(Q_(self.payback_period, 'yr'))]
+            ['Power in Average', '{:~.2fP}'.format(self.average_power_in)],
+            ['Annual Energy In', '{:~.2fP}'.format(self.annual_energy_in)],
+            ['Capital Cost Per Unit', '{:,~.2fP}'.format(self.specific_capital_cost)],
+            ['Fixed O&M Costs', '{:,~.2fP}'.format(self.fixed_o_and_m_per_size)],
+            ['Variable O&M Costs', '{:,~.2fP}'.format(self.variable_o_and_m)],
+            ['Capital Cost', '{:,~.2fP}'.format(self.capital_cost)],
+            ['Year One Energy Costs', '{:,~.2fP}'.format(self.year_one_energy_costs)],
+            ['Year One Fixed O&M Costs', '{:,~.2fP}'.format(self.year_one_fixed_o_and_m)],
+            ['Year One Variable O&M Costs', '{:,~.2fP}'.format(self.year_one_variable_o_and_m)],
+            ['Year One Total Operating Costs', '{:,~.2fP}'.format(self.year_one_operating_costs)],
+            ['LCOH', '{:,~.2fP}'.format(self.LCOH)],
             ]
         
         df_output = pd.DataFrame(data,columns=['Variable','Value'])

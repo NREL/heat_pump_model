@@ -1,0 +1,51 @@
+# If csv data will be used, update n_hrs after running construct_yaml_input_quantities
+n_hrs: 8760
+
+##### Usage Notes #####
+
+# If a variable uses a dictionary, the dictionary must include a value (val) and a unit.
+# If an input array (hourly data) will be used, load this file, then write over the inputs here with desired array.
+
+##### IO #####
+print_results: True
+write_output_file: True
+
+##### 1. Performance #####
+## Inputs
+
+thermal_efficiency: {val: 0.92, unit: 'dimensionless'}
+
+##### 2.Energy and Mass Flow #####
+## Inputs
+process_heat_requirement: {val: 1.0, unit: 'MW'}
+
+# Working Fluid
+working_fluid: 'water'
+
+## Cold In
+cold_temperature: {val: 80.0, unit: 'degC'}
+cold_pressure: {val: 1.0, unit: 'atm'}
+
+## Setting working fluid parameters
+hot_pressure: {val: 1.1, unit: 'atm'}
+hot_temperature: {val: 160.0, unit: 'degC'}
+
+##### 3.Electric Heater Costs #####
+## Inputs
+# 200 euro/kW -> $240/kW
+# 600 euro/kW -> $710/kW
+# 900 euro/kW -> $1070/kW
+specific_capital_cost: {val: 100.0, unit: 'USD/kW'}
+# Yearly O&M is assumed at 2.0% of capital cost
+fixed_o_and_m_per_size: {val: 1.0, unit: 'USD/kW'}
+variable_o_and_m: {val: 0.01, unit: 'USD/MMBtu'}
+lifetime: {val: 40.0, unit: 'yr'}
+discount_rate: {val: 10, unit: 'percent'}
+
+hourly_utility_rate: {val: 0.02, unit: 'USD / kW / hr'}
+utility_rate: {val: 10.0, unit: 'USD / kW'}
+
+# Emissions
+emissions_factor: {val: 0.0, unit: 'ton / MMBtu'}
+year_one_emissions: {val: 0.0, unit: 'ton / yr'}
+
