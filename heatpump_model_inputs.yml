@@ -65,9 +65,7 @@ emissions_factor: {val: 0, unit: 'tonnes / MMBtu'}
 year_one_emissions: {val: 0.0, unit: 'ton / yr'}
 
 ##### 5. Cash Flow Model #####
-kwh_CAGR: {val: 0.00, unit: 'dimensionless'}
-gas_CAGR: {val: 0.00, unit: 'dimensionless'}
-existing_gas: False
+CAGR: {val: 0.0214, unit: 'dimensionless'}
 
 ##### Future Work #####
 # Latitude and Longitude is to use the Utility Rate Database

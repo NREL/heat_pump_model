@@ -47,10 +47,9 @@ discount_rate: {val: 10, unit: 'percent'}
 # Emissions
 emissions_factor: {val: 120000, unit: 'lb / MMSCF'}
 emissions_volume_per_energy: {val: 9.804e-4, unit: 'MMSCF/MMBtu'}
-emissions_carbon_price: {val: 0.0, unit: 'USD / ton'}
+emissions_carbon_price: {val: 1.0, unit: 'USD / ton'}
 year_one_emissions: {val: 0.0, unit: 'ton / yr'}
 
 ##### 5. Cash Flow Model #####
-kwh_CAGR: {val: 0.00, unit: 'dimensionless'}
-gas_CAGR: {val: 0.00, unit: 'dimensionless'}
-existing_gas: False
+CAGR: {val: 0.0314, unit: 'dimensionless'}
+
