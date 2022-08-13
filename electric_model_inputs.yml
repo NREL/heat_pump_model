@@ -39,7 +39,7 @@ specific_capital_cost: {val: 100.0, unit: 'USD/kW'}
 # Yearly O&M is assumed at 2.0% of capital cost
 fixed_o_and_m_per_size: {val: 1.0, unit: 'USD/kW'}
 variable_o_and_m: {val: 0.01, unit: 'USD/MMBtu'}
-lifetime: {val: 40.0, unit: 'yr'}
+lifetime: {val: 20.0, unit: 'yr'}
 discount_rate: {val: 10, unit: 'percent'}
 
 hourly_utility_rate: {val: 0.02, unit: 'USD / kW / hr'}
