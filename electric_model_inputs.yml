@@ -51,4 +51,4 @@ CAGR: {val: 0.0214, unit: 'dimensionless'}
 # Emissions
 emissions_factor: {val: 0.0, unit: 'ton / MMBtu'}
 year_one_emissions: {val: 0.0, unit: 'ton / yr'}
-
+year_one_cost_of_emissions: {val: 0.0, unit: 'USD'}

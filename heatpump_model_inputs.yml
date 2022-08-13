@@ -63,6 +63,7 @@ utility_rate: {val: 10.0, unit: 'USD / kW'}
 # Emissions
 emissions_factor: {val: 0, unit: 'tonnes / MMBtu'}
 year_one_emissions: {val: 0.0, unit: 'ton / yr'}
+year_one_cost_of_emissions: {val: 0.0, unit: 'USD'}
 
 ##### 5. Cash Flow Model #####
 CAGR: {val: 0.0214, unit: 'dimensionless'}

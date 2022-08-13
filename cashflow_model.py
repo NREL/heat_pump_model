@@ -15,6 +15,29 @@ from libraries import *
 from refrigerant_properties import*
 from utilities.unit_defs import ureg, Q_
 
+def object_to_dict(heat_supply_object):
+    cashflow_dict = {
+        'capital_cost'                  : heat_supply_object.capital_cost.m,
+        'year_one_energy_cost'          : heat_supply_object.year_one_energy_costs.m,
+        'year_one_fixed_o_and_m'        : heat_supply_object.year_one_fixed_o_and_m.m,
+        'year_one_variable_o_and_m'     : heat_supply_object.year_one_variable_o_and_m.m,
+        'year_one_cost_of_emissions'    : heat_supply_object.year_one_cost_of_emissions.m,
+        'CAGR'                          : heat_supply_object.CAGR.m,
+    }
+    return cashflow_dict
+
+def combined_dict(heat_supply_object1, heat_supply_object2):
+    cashflow_dict = {
+        'capital_cost'                  : heat_supply_object1.capital_cost.m+heat_supply_object2.capital_cost.m,
+        'year_one_energy_cost'          : heat_supply_object1.year_one_energy_costs.m+heat_supply_object2.year_one_energy_costs.m,
+        'year_one_fixed_o_and_m'        : heat_supply_object1.year_one_fixed_o_and_m.m+heat_supply_object2.year_one_fixed_o_and_m.m,
+        'year_one_variable_o_and_m'     : heat_supply_object1.year_one_variable_o_and_m.m+heat_supply_object2.year_one_variable_o_and_m.m,
+        'year_one_cost_of_emissions'    : heat_supply_object1.year_one_cost_of_emissions.m+heat_supply_object2.year_one_cost_of_emissions.m,
+        'CAGR'                          : max(heat_supply_object1.CAGR.m,heat_supply_object2.CAGR.m),
+    }
+    return cashflow_dict
+
+
 def calculate_cash_flow(dict1, dict2, project_lifetime, discount_rate):
     # dict1 and dict2 are the costs. dict1 should be the baseline costs while dict1 is the 
     # upgraded costs. The objects will be responsible for returning the dictionary. 
