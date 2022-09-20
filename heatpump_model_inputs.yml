@@ -50,7 +50,7 @@ process_heat_requirement: {val: 1.0, unit: 'MW'}
 # 200 euro/kW -> $240/kW
 # 600 euro/kW -> $710/kW
 # 900 euro/kW -> $1070/kW
-specific_capital_cost: {val: 590.0, unit: 'USD/kW'}
+specific_capital_cost: {val: 300.0, unit: 'USD/kW'}
 # Yearly O&M is assumed at 2.0% of capital cost
 fixed_o_and_m_per_size: {val: 11.8, unit: 'USD/kW'}
 variable_o_and_m: {val: 0.05, unit: 'USD/MMBtu'}

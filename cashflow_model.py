@@ -47,6 +47,8 @@ def calculate_cash_flow(dict1, dict2, project_lifetime, discount_rate):
 
     # Here the capital costs are appended
     annual_cashflow.append(dict1['capital_cost']-dict2['capital_cost'])
+    #annual_cashflow.append(dict2['capital_cost']-dict1['capital_cost'])
+
 
     for i in range(1, project_lifetime):
         # Getting adjusted energy prices
@@ -59,13 +61,20 @@ def calculate_cash_flow(dict1, dict2, project_lifetime, discount_rate):
 
         # Appending to the annual cashflow
         annual_cashflow.append(dict1_operating_costs-dict2_operating_costs)
-    
+        
+    #annual_cashflow[0] = -1*annual_cashflow[0]
+    print(annual_cashflow)
+
     net_present_value = Q_(npf.npv(discount_rate, annual_cashflow), 'USD')
     print('NPV: {:,~.2fP}'.format(net_present_value))
 
     if net_present_value.m > 0.0:
-        internal_rate_of_return = Q_(npf.irr(annual_cashflow), 'dimensionless').to('pct')
-        payback_period          = math.log(1/(1-(annual_cashflow[0])*discount_rate/annual_cashflow[1]))/math.log(1+discount_rate)
+        try:
+            internal_rate_of_return = Q_(npf.irr(annual_cashflow), 'dimensionless').to('pct')
+            payback_period          = math.log(1/(1-(annual_cashflow[0])*discount_rate/annual_cashflow[1]))/math.log(1+discount_rate)
+        except:
+            internal_rate_of_return = 'NA'
+            payback_period          = 'NA'
     else:
         internal_rate_of_return = 'NA'
         payback_period          = 'NA'

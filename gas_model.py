@@ -104,6 +104,7 @@ class gas_heater:
     def calculate_costs(self):
 
         self.capital_cost = self.specific_capital_cost * np.max(self.process_heat_requirement.to('kW'))
+        self.capital_cost = self.capital_cost.to('USD')
         self.year_one_fixed_o_and_m = self.fixed_o_and_m_per_size*np.max(self.process_heat_requirement.to('MMBtu/hr'))/Q_('1 yr')
         self.year_one_fixed_o_and_m = self.year_one_fixed_o_and_m
         self.year_one_variable_o_and_m = self.variable_o_and_m*self.mysum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr')
