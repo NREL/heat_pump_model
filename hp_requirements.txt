@@ -1,0 +1,11 @@
+conda install jupyterlab
+conda install pandas
+
+conda install numpy
+conda install numpy-financial
+conda install coolprop
+conda install yaml
+conda install pyyaml
+conda install pint 
+conda install plotly
+

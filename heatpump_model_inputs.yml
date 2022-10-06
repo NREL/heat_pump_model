@@ -43,14 +43,14 @@ hot_temperature_minimum: {val: 145.0, unit: 'degC'}
 hot_mass_flowrate: {val: 99.0, unit: 'kg/s'}
 hot_refrigerant: 'air'
 
-process_heat_requirement: {val: NaN, unit: 'kW'}
+process_heat_requirement: {val: 1.0, unit: 'MW'}
 
 ##### 3.Heat Pump Costs #####
 ## Inputs
 # 200 euro/kW -> $240/kW
 # 600 euro/kW -> $710/kW
 # 900 euro/kW -> $1070/kW
-specific_capital_cost: {val: 590.0, unit: 'USD/kW'}
+specific_capital_cost: {val: 300.0, unit: 'USD/kW'}
 # Yearly O&M is assumed at 2.0% of capital cost
 fixed_o_and_m_per_size: {val: 11.8, unit: 'USD/kW'}
 variable_o_and_m: {val: 0.05, unit: 'USD/MMBtu'}
@@ -60,24 +60,13 @@ discount_rate: {val: 10, unit: 'percent'}
 hourly_utility_rate: {val: 0.02, unit: 'USD / kW / hr'}
 utility_rate: {val: 10.0, unit: 'USD / kW'}
 
-##### 4. Natural Gas Costs #####
-## Inputs
-specific_gas_capital_cost: {val: 90000, unit: 'USD / (MMBtu / hr)'}
-gas_fixed_o_and_m_per_size: {val: 50, unit: 'USD / ((MMBtu / hr) * year)'}
-gas_variable_o_and_m_per_mmbtu: {val: 0.01, unit: 'USD / MMBtu'}
-gas_price: {val: 3.5, unit: 'USD / MMBtu'}
-gas_efficiency: {val: 0.8, unit: 'dimensionless'}
-gas_emissions_factor: {val: 120000, unit: 'lb / MMSCF'}
-gas_emissions_volume_per_energy: {val: 9.804e-4, unit: 'MMSCF/MMBtu'}
-
 # Emissions
-carbon_price: {val: 0.0, unit: 'USD / ton'}
-gas_year_one_emissions: {val: 0.0, unit: 'ton / yr'}
+emissions_factor: {val: 0, unit: 'tonnes / MMBtu'}
+year_one_emissions: {val: 0.0, unit: 'ton / yr'}
+year_one_cost_of_emissions: {val: 0.0, unit: 'USD'}
 
 ##### 5. Cash Flow Model #####
-kwh_CAGR: {val: 0.00, unit: 'dimensionless'}
-gas_CAGR: {val: 0.00, unit: 'dimensionless'}
-existing_gas: False
+CAGR: {val: 0.0214, unit: 'dimensionless'}
 
 ##### Future Work #####
 # Latitude and Longitude is to use the Utility Rate Database
