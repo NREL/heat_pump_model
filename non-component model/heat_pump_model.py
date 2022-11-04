@@ -49,10 +49,24 @@ class heat_pump:
         self.year_one_operating_costs = Q_('-1.0 USD/yr')
         self.LCOH = Q_('-1.0 USD / MMMBtu')
         self.capacity_factor = Q_('-1.0')
+        
+        ##### 4. Natural Gas Costs #####
+        ## Outputs
+        self.gas_capital_cost = Q_('-1.0 USD')
+        self.gas_year_one_energy_costs = Q_('-1.0 USD/yr')
+        self.gas_year_one_fixed_o_and_m = Q_('-1.0 USD/yr')
+        self.gas_year_one_variable_o_and_m = Q_('-1.0 USD/yr')
+        self.gas_year_one_operating_costs = Q_('-1.0 USD/yr')
+        self.gas_LCOH = Q_('-1.0 USD / (MW * hr)')
+
+        ##### 5. Cash Flow Model #####
+        self.net_present_value = Q_('0.0 USD')
+        self.internal_rate_of_return = Q_('-1.0')
+        self.payback_period = Q_('100.0 yr')
 
         self.n_hrs = 8760
 
-        self.construct_yaml_input_quantities('heatpump_model_inputs.yml')
+        #self.construct_yaml_input_quantities('heatpump_model_inputs.yml')
 
     
     def construct_yaml_input_quantities(self, file_path):
@@ -291,6 +305,79 @@ class heat_pump:
             print('One Year Operating Costs: {:,~.2fP}'.format(self.year_one_operating_costs))
             print('Lifetime LCOH: {:,~.2fP}'.format(self.LCOH))
 
+    ## Calculating Natural Gas Prices (might remake to be a repeat of heat pump and make ubiquitous)
+    def calculate_natural_gas_comparison(self):
+        if self.print_results: print('Calculate Natural Gas Comparison')
+        if self.existing_gas == True:
+            self.gas_capital_cost = Q_('0.0 USD')
+        else:
+            self.gas_capital_cost = self.specific_gas_capital_cost * np.max(self.process_heat_requirement.to('MMBtu/hr'))/self.gas_efficiency
+            self.gas_capital_cost = self.gas_capital_cost
+        self.gas_year_one_fixed_o_and_m = self.gas_fixed_o_and_m_per_size*np.max(self.process_heat_requirement.to('MMBtu/hr'))
+        self.gas_year_one_fixed_o_and_m = self.gas_year_one_fixed_o_and_m
+        self.gas_year_one_variable_o_and_m = self.gas_variable_o_and_m_per_mmbtu*self.mysum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/(Q_('1 yr')*self.gas_efficiency)
+        self.gas_year_one_variable_o_and_m = self.gas_year_one_variable_o_and_m
+
+        # Calculating Emissions
+        # 1020 from 1 MMSCF/1020 MMBTU
+        # 2000 from 1 ton/2000 lb
+        # Calculated using EPA estimate: https://www.epa.gov/sites/production/files/2016-09/boilers_and_emergency_engines_pte_calculator_version_1.0.xlsx 
+
+        self.gas_year_one_emissions = (self.mysum(self.process_heat_requirement.to('MMBtu/yr'))/self.gas_efficiency) * self.gas_emissions_factor.to('ton / MMSCF')*self.gas_emissions_volume_per_energy
+        self.gas_year_one_cost_of_emissions =   (self.carbon_price * self.gas_year_one_emissions)
+
+        # fuel_costs = Q_(np.array([0.0]*self.n_hrs), 'USD/hr')
+        fuel_costs = self.gas_price*self.process_heat_requirement.to('MMBtu/hr')
+        self.gas_year_one_energy_costs = (self.mysum(fuel_costs*Q_('1 hr')))/Q_('1 yr')
+        self.gas_year_one_operating_costs = self.gas_year_one_fixed_o_and_m + self.gas_year_one_variable_o_and_m + self.gas_year_one_energy_costs + self.gas_year_one_cost_of_emissions 
+        self.gas_year_one_operating_costs = self.gas_year_one_operating_costs
+
+        self.gas_LCOH = (self.gas_capital_cost+ self.lifetime*self.gas_year_one_operating_costs)/(self.lifetime*self.mysum(self.process_heat_requirement.to('MMBtu/hr')*Q_('1 hr'))/Q_('1 yr'))
+
+        self.gas_LCOH = self.gas_LCOH.to('USD/MMBtu')
+
+        if self.print_results: 
+            print('Gas Capital Cost: {:,~.2fP}'.format(self.gas_capital_cost))
+            print('Gas One Year Fixed O&M Costs: {:,~.2fP}'.format(self.gas_year_one_fixed_o_and_m))
+            print('Gas One Year Variable O&M Costs: {:,~.2fP}'.format(self.gas_year_one_variable_o_and_m))
+            print('Gas One Year Energy Costs: {:,~.2fP}'.format(self.gas_year_one_energy_costs))
+            print('Gas One Year Operating Costs: {:,~.2fP}'.format(self.gas_year_one_operating_costs))
+            print('Gas Lifetime LCOH: {:,~.2fP}'.format(self.gas_LCOH))
+
+    def calculate_cash_flow(self):  
+        if self.print_results: print('Calculate Cash Flow')
+        # Compare to a new build natural gas plant
+        annual_cashflow = []
+        # If true, the full cost of the heat pump is included, if false, than 
+        # the cost of the natural gas plant is subtracted from the capital cost of the heat pump to compare.
+        if self.existing_gas == True:
+            annual_cashflow.append(-1*(self.capital_cost.m))
+        else:
+            annual_cashflow.append(-1*(self.capital_cost.m - self.gas_capital_cost.m))
+        
+        # The Cashflow model is always the cost saved by using the heat pump. 
+        # The price of carbon is included in the cost of the natural gas plant.
+        for i in range(1, int(self.lifetime.magnitude+1)):
+            gas_CAGR_energy_costs = self.gas_year_one_energy_costs*math.e**(i*math.log(1+self.gas_CAGR))
+            kwh_CAGR_energy_costs = self.year_one_energy_costs*math.e**(i*math.log(1+self.kwh_CAGR))
+            annual_gas_operating_cost = self.gas_year_one_fixed_o_and_m + self.gas_year_one_variable_o_and_m + self.gas_year_one_cost_of_emissions + gas_CAGR_energy_costs
+            annual_kwh_operating_cost = self.year_one_fixed_o_and_m + self.year_one_variable_o_and_m + kwh_CAGR_energy_costs
+            annual_cashflow.append(annual_gas_operating_cost.m - annual_kwh_operating_cost.m)
+            #print(i, 'gas', gas_CAGR_energy_costs, 'total', annual_gas_operating_cost)
+
+        # Calculating and outputting (pint not working well with npf, so using some workarounds for now)
+        self.net_present_value = Q_(npf.npv(self.discount_rate.m, annual_cashflow), 'USD')
+        if self.print_results: print('NPV: {:,~.2fP}'.format(self.net_present_value))
+        self.internal_rate_of_return = Q_(npf.irr(annual_cashflow), 'dimensionless').to('pct')
+        if self.print_results: print('IRR: {:~.3fP}'.format(self.internal_rate_of_return))
+        # Need to calcuate year 1 energy Savings
+        try:
+            self.payback_period = math.log(1/(1-(self.capital_cost-self.gas_capital_cost)*self.discount_rate/annual_cashflow[1]))/math.log(1+self.discount_rate)
+            if self.print_results: print('PBP: {:~.2fP}'.format(self.payback_period))
+        except:
+            self.payback_period = 'NA'
+            if self.print_results: print('PBP: {:~P}'.format(Q_(self.payback_period, 'yr')))
+        
     def write_output(self, filename):
         data = [
             ['Cold Temperature Available', '{:~.2fP}'.format(self.cold_temperature_available)],
@@ -310,17 +397,32 @@ class heat_pump:
             ['Utility Rate Average', '{:,~.2fP}'.format(np.mean(self.hourly_utility_rate))],
             ['Capacity Factor', '{:~.3fP}'.format(np.mean(self.capacity_factor))],
             ['Project Lifetime', '{:~.2fP}'.format(self.lifetime)],
-            ['Power in Average', '{:~.2fP}'.format(self.average_power_in)],
-            ['Annual Energy In', '{:~.2fP}'.format(self.annual_energy_in)],
-            ['Capital Cost Per Unit', '{:,~.2fP}'.format(self.specific_capital_cost)],
-            ['Fixed O&M Costs', '{:,~.2fP}'.format(self.fixed_o_and_m_per_size)],
-            ['Variable O&M Costs', '{:,~.2fP}'.format(self.variable_o_and_m)],
-            ['Capital Cost', '{:,~.2fP}'.format(self.capital_cost)],
-            ['Year One Energy Costs', '{:,~.2fP}'.format(self.year_one_energy_costs)],
-            ['Year One Fixed O&M Costs', '{:,~.2fP}'.format(self.year_one_fixed_o_and_m)],
-            ['Year One Variable O&M Costs', '{:,~.2fP}'.format(self.year_one_variable_o_and_m)],
-            ['Year One Total Operating Costs', '{:,~.2fP}'.format(self.year_one_operating_costs)],
-            ['LCOH', '{:,~.2fP}'.format(self.LCOH)],
+            ['HP Power in Average', '{:~.2fP}'.format(self.average_power_in)],
+            ['HP Annual Energy In', '{:~.2fP}'.format(self.annual_energy_in)],
+            ['HP Capital Cost Per Unit', '{:,~.2fP}'.format(self.specific_capital_cost)],
+            ['HP Fixed O&M Costs', '{:,~.2fP}'.format(self.fixed_o_and_m_per_size)],
+            ['HP Variable O&M Costs', '{:,~.2fP}'.format(self.variable_o_and_m)],
+            ['HP Capital Cost', '{:,~.2fP}'.format(self.capital_cost)],
+            ['HP Year One Energy Costs', '{:,~.2fP}'.format(self.year_one_energy_costs)],
+            ['HP Year One Fixed O&M Costs', '{:,~.2fP}'.format(self.year_one_fixed_o_and_m)],
+            ['HP Year One Variable O&M Costs', '{:,~.2fP}'.format(self.year_one_variable_o_and_m)],
+            ['HP Year One Total Operating Costs', '{:,~.2fP}'.format(self.year_one_operating_costs)],
+            ['HP LCOH', '{:,~.2fP}'.format(self.LCOH)],
+            ['Gas Capital Cost Per Unit', '{:,~.2fP}'.format(self.specific_gas_capital_cost)],
+            ['Gas Fixed O&M Costs', '{:,~.2fP}'.format(self.gas_fixed_o_and_m_per_size)],
+            ['Gas Variable O&M Costs', '{:,~.2fP}'.format(self.gas_variable_o_and_m_per_mmbtu)],
+            ['Gas Average Price', '{:,~.2fP}'.format(np.mean(self.gas_price))],
+            ['Gas Capital Cost', '{:,~.2fP}'.format(self.gas_capital_cost)],
+            ['Gas Year One Energy Costs', '{:,~.2fP}'.format(self.gas_year_one_energy_costs)],
+            ['Gas Year One Fixed O&M Costs', '{:,~.2fP}'.format(self.gas_year_one_fixed_o_and_m)],
+            ['Gas Year One Variable O&M Costs', '{:,~.2fP}'.format(self.gas_year_one_variable_o_and_m)],
+            ['Gas Year One Total Operating Costs', '{:,~.2fP}'.format(self.gas_year_one_operating_costs)],
+            ['Gas LCOH', '{:,~.2fP}'.format(self.gas_LCOH)],
+            ['Gas Emissions', '{:~.2fP}'.format(self.gas_year_one_emissions)],
+            ['Gas Social Cost of Emissions', '{:,~.2fP}'.format(self.gas_year_one_cost_of_emissions)],
+            ['Net Present Value', '{:,~.2fP}'.format(self.net_present_value)],
+            ['Internal Rate of Return pct', '{:~.3fP}'.format(self.internal_rate_of_return)],
+            ['Payback Period', '{:~P}'.format(Q_(self.payback_period, 'yr'))]
             ]
         
         df_output = pd.DataFrame(data,columns=['Variable','Value'])
@@ -331,5 +433,7 @@ class heat_pump:
         self.calculate_COP()
         self.calculate_energy_and_mass_flow()
         self.calculate_heat_pump_costs()
+        self.calculate_natural_gas_comparison()
+        self.calculate_cash_flow()
         if self.write_output_file: self.write_output(filename)
 

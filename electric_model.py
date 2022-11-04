@@ -45,7 +45,7 @@ class electric_heater:
         self.LCOH = Q_('-1.0 USD / MMMBtu')
         self.capacity_factor = Q_('-1.0')
 
-        self.construct_yaml_input_quantities('electric_model_inputs.yml')
+        #self.construct_yaml_input_quantities('electric_model_inputs.yml')
     
     def construct_yaml_input_quantities(self, file_path):
         with open(file_path, "r") as file_desc:
