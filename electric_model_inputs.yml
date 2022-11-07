@@ -11,44 +11,34 @@ print_results: True
 write_output_file: True
 
 ##### 1. Performance #####
-## Inputs
-
 thermal_efficiency: {val: 0.92, unit: 'dimensionless'}
 
 ##### 2.Energy and Mass Flow #####
-## Inputs
 process_heat_requirement: {val: 1.0, unit: 'MW'}
-
 # Working Fluid
 working_fluid: 'water'
-
 ## Cold In
-cold_temperature: {val: 80.0, unit: 'degC'}
+cold_temperature: {val: 115.0, unit: 'degC'}
 cold_pressure: {val: 1.0, unit: 'atm'}
-
 ## Setting working fluid parameters
 hot_pressure: {val: 1.1, unit: 'atm'}
-hot_temperature: {val: 160.0, unit: 'degC'}
+hot_temperature: {val: 120.0, unit: 'degC'}
+process_heat_requirement: {val: 1.0, unit: 'MW'}
 
 ##### 3.Electric Heater Costs #####
-## Inputs
-# 200 euro/kW -> $240/kW
-# 600 euro/kW -> $710/kW
-# 900 euro/kW -> $1070/kW
+# $100/kW
 specific_capital_cost: {val: 100.0, unit: 'USD/kW'}
 # Yearly O&M is assumed at 2.0% of capital cost
 fixed_o_and_m_per_size: {val: 1.0, unit: 'USD/kW'}
 variable_o_and_m: {val: 0.01, unit: 'USD/MMBtu'}
 lifetime: {val: 20.0, unit: 'yr'}
 discount_rate: {val: 10, unit: 'percent'}
-
 hourly_utility_rate: {val: 0.02, unit: 'USD / kW / hr'}
 utility_rate: {val: 10.0, unit: 'USD / kW'}
-
-##### 5. Cash Flow Model #####
-CAGR: {val: 0.0214, unit: 'dimensionless'}
-
 # Emissions
 emissions_factor: {val: 0.0, unit: 'ton / MMBtu'}
 year_one_emissions: {val: 0.0, unit: 'ton / yr'}
 year_one_cost_of_emissions: {val: 0.0, unit: 'USD'}
+
+##### 5. Cash Flow Model #####
+CAGR: {val: 0.0214, unit: 'dimensionless'}

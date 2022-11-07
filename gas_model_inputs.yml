@@ -10,40 +10,29 @@ n_hrs: 8760
 print_results: True
 write_output_file: True
 
-##### 1.COP #####
-## Inputs
+##### 1. Performance #####
 thermal_efficiency: {val: 0.8, unit: 'dimensionless'}
 
 ##### 2.Energy and Mass Flow #####
-## Inputs
 process_heat_requirement: {val: 1.0, unit: 'MW'}
-
 # Working Fluid
 working_fluid: 'water'
-
-
 ## Cold In
-cold_temperature: {val: 80.0, unit: 'degC'}
+cold_temperature: {val: 115.0, unit: 'degC'}
 cold_pressure: {val: 1.0, unit: 'atm'}
-
 ## Setting working fluid parameters
 hot_pressure: {val: 1.1, unit: 'atm'}
-hot_temperature: {val: 160.0, unit: 'degC'}
-
+hot_temperature: {val: 120.0, unit: 'degC'}
 process_heat_requirement: {val: 1.0, unit: 'MW'}
 
 ##### 3.Gas Costs #####
-## Inputs
-# 200 euro/kW -> $240/kW
-# 600 euro/kW -> $710/kW
-# 900 euro/kW -> $1070/kW
-specific_capital_cost: {val: 900, unit: 'USD / (MMBtu / hr)'}
+# $9000/MMBTU/Hr -> $30/kW
+specific_capital_cost: {val: 9000, unit: 'USD / (MMBtu / hr)'}
 fixed_o_and_m_per_size: {val: 50, unit: 'USD / (MMBtu / hr)'}
 variable_o_and_m: {val: 0.01, unit: 'USD / MMBtu'}
 gas_price: {val: 20.0, unit: 'USD / MMBtu'}
 lifetime: {val: 20.0, unit: 'yr'}
 discount_rate: {val: 10, unit: 'percent'}
-
 # Emissions
 emissions_factor: {val: 120000, unit: 'lb / MMSCF'}
 emissions_volume_per_energy: {val: 9.804e-4, unit: 'MMSCF/MMBtu'}
@@ -51,5 +40,5 @@ emissions_carbon_price: {val: 0.0, unit: 'USD / ton'}
 year_one_emissions: {val: 0.0, unit: 'ton / yr'}
 
 ##### 5. Cash Flow Model #####
-CAGR: {val: 0.0314, unit: 'dimensionless'}
+CAGR: {val: 0.0214, unit: 'dimensionless'}
 

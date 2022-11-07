@@ -11,42 +11,36 @@ print_results: True
 write_output_file: True
 
 ##### 1.COP #####
-## Inputs
 cold_temperature_available: {val: 50.0, unit: 'degC'}
-hot_temperature_desired: {val: 160.0, unit: 'degC'}
-
+hot_temperature_desired: {val: 120.0, unit: 'degC'}
 second_law_efficiency: {val: 0.5, unit: 'dimensionless'}
 # If the refrigerant selection process fails, the flag is changed to true so that it can be automatically analyzed post processing
 second_law_efficiency_flag: True
-
 t_crit_delta: {val: 30, unit: 'delta_degC'}
 min_p_crit: {val: 1.0e9, unit: 'Pa'}
-
 # The hot and cold buffer are the temperature difference between the working fluid and the hot and cold streams, a measure of the heat exchanger efficiency
 cold_buffer: {val: 5.0, unit: 'delta_degC'}
 hot_buffer: {val: 5.0, unit: 'delta_degC'}
-
 compressor_efficiency: {val: 0.7, unit: 'dimensionless'}
-
+# Refrigerant
 refrigerant: 'R1234ze(Z)'
 refrigerant_flag: False
 
 ##### 2.Energy and Mass Flow #####
-## Inputs
+# Cold Inputs
 cold_pressure: {val: 1.0, unit: 'atm'}
 cold_mass_flowrate: {val: NaN, unit: 'kg/s'}
 cold_refrigerant: 'water'
 cold_deltaT: {val: 1.0, unit: 'delta_degC'}
-
+# Hot inputs
 hot_pressure: {val: 1.0, unit: 'atm'}
-hot_temperature_minimum: {val: 145.0, unit: 'degC'}
+hot_temperature_minimum: {val: 115.0, unit: 'degC'}
 hot_mass_flowrate: {val: 99.0, unit: 'kg/s'}
 hot_refrigerant: 'air'
-
+# Process Heat
 process_heat_requirement: {val: 1.0, unit: 'MW'}
 
 ##### 3.Heat Pump Costs #####
-## Inputs
 # 200 euro/kW -> $240/kW
 # 600 euro/kW -> $710/kW
 # 900 euro/kW -> $1070/kW
@@ -56,10 +50,8 @@ fixed_o_and_m_per_size: {val: 11.8, unit: 'USD/kW'}
 variable_o_and_m: {val: 0.05, unit: 'USD/MMBtu'}
 lifetime: {val: 20.0, unit: 'yr'}
 discount_rate: {val: 10, unit: 'percent'}
-
 hourly_utility_rate: {val: 0.02, unit: 'USD / kW / hr'}
 utility_rate: {val: 10.0, unit: 'USD / kW'}
-
 # Emissions
 emissions_factor: {val: 0, unit: 'tonnes / MMBtu'}
 year_one_emissions: {val: 0.0, unit: 'ton / yr'}
